@@ -405,6 +405,9 @@
     </div>
 
     <script>
+        // kwoty po polsku, zaokrąglone do pełnych złotych (od ,5 w górę): 1 235
+        const nf = (n, d = 2) => Number(n).toLocaleString('pl-PL', { minimumFractionDigits: d, maximumFractionDigits: d });
+        const zl = n => Number(n).toLocaleString('pl-PL', { maximumFractionDigits: 0 });
         const months = ['Sty','Lut','Mar','Kwi','Maj','Cze','Lip','Sie','Wrz','Paź','Lis','Gru'];
         const STORAGE_KEY = 'eMERYTURA_STATE_v5';
         const PURCHASES_KEY = 'eMERYTURA_PURCHASES_v1';
@@ -758,7 +761,7 @@
                 <div class="year-section">
                     <div class="year-header">
                         <div class="year-title">Rok ${year} (wiek ${34 + year})</div>
-                        <div class="year-total">Cel: ${baseYearly}${extra > 0 && !isZonaSP && !isZonaGold ? ' + ' + extra : ''} zł</div>
+                        <div class="year-total">Cel: ${zl(baseYearly)}${extra > 0 && !isZonaSP && !isZonaGold ? ' + ' + zl(extra) : ''} zł</div>
                     </div>
 
                     <div class="months-grid">
@@ -768,7 +771,7 @@
                             return `
                             <div class="month-check">
                                 <input type="checkbox" id="${checkboxId}" onchange="onFieldChange()">
-                                <label for="${checkboxId}">${m} (${baseMonthly} zł)</label>
+                                <label for="${checkboxId}">${m} (${zl(baseMonthly)} zł)</label>
                                 ${hasTicker ? `<button class="purchase-btn ${hasPurchase}" onclick="savePurchasePrice('${checkboxId}', '${type}', ${baseMonthly})">💰</button>` : ''}
                             </div>
                         `}).join('')}
@@ -776,7 +779,7 @@
 
                     ${extra > 0 && !isZonaSP && !isZonaGold ? `
                         <div class="extra-input">
-                            <label>Extra wpłata roczna (cel: ${extra} zł, pozostało: ${extraRemaining.toFixed(0)} zł):</label>
+                            <label>Extra wpłata roczna (cel: ${zl(extra)} zł, pozostało: ${nf(extraRemaining, 0)} zł):</label>
                             <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
                                 <input type="number" id="${type}_extra_input_y${year}" value="" placeholder="Wpisz kwotę..." style="flex:1;">
                                 ${hasTicker ? `<button class="purchase-btn" onclick="saveExtraPurchasePrice('${type}', ${year})" style="padding:10px 15px; font-size:1em;">💰 Dodaj</button>` : ''}
@@ -785,7 +788,7 @@
                                 ${Object.keys(purchases).filter(k => k.startsWith(`${type}_extra_y${year}_`)).map(key => {
                                     const p = purchases[key];
                                     return `<div style="padding:5px; background:var(--panel2); border-radius:5px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
-                                        <span>✅ ${p.amount} zł (${p.priceOriginal?.toFixed(2)} ${p.currency} × ${p.units?.toFixed(4)})</span>
+                                        <span>✅ ${zl(p.amount)} zł (${p.priceOriginal ? nf(p.priceOriginal, 2) : "-"} ${p.currency} × ${p.units ? nf(p.units, 4) : "-"})</span>
                                         <button onclick="deleteExtraPurchase('${key}')" style="background:rgba(236,106,97,.18); color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer; font-size:0.85em;">🗑️</button>
                                     </div>`;
                                 }).join('') || '<span style="color:var(--muted);">Brak wpłat extra</span>'}
@@ -830,12 +833,12 @@
             });
 
             const total = totalFromPurchases + totalFromCheckboxes;
-            document.getElementById('totalInvested').textContent = total.toLocaleString('pl-PL') + ' zł';
+            document.getElementById('totalInvested').textContent = zl(total) + ' zł';
             
             const targetValue = 1508200;
             const profit = targetValue - total;
-            document.getElementById('totalProfit').textContent = profit.toLocaleString('pl-PL') + ' zł';
-            const roiValue = total > 0 ? ((profit / total) * 100).toFixed(0) : '∞';
+            document.getElementById('totalProfit').textContent = zl(profit) + ' zł';
+            const roiValue = total > 0 ? zl(Math.round((profit / total) * 100)) : '∞';
             document.getElementById('roi').textContent = roiValue + '%';
         }
 
@@ -1087,7 +1090,7 @@
 
                 savePurchases();
                 console.log('Zapisano extra zakup:', purchases[purchaseKey]);
-                showToast(`✅ EXTRA: ${units.toFixed(4)} jedn. po ${priceData.priceOriginal.toFixed(2)} ${priceData.currency} (${priceData.pricePLN.toFixed(2)} zł)`);
+                showToast(`✅ EXTRA: ${nf(units, 4)} jedn. po ${nf(priceData.priceOriginal, 0)} ${priceData.currency} (${nf(priceData.pricePLN, 0)} zł)`);
                 
                 input.value = '';
                 initializeContent();
@@ -1131,7 +1134,7 @@
 
                 savePurchases();
                 console.log('Zapisano zakup:', purchases[checkboxId]);
-                showToast(`✅ ${units.toFixed(4)} jedn. po ${priceData.priceOriginal.toFixed(2)} ${priceData.currency} (${priceData.pricePLN.toFixed(2)} zł)`);
+                showToast(`✅ ${nf(units, 4)} jedn. po ${nf(priceData.priceOriginal, 0)} ${priceData.currency} (${nf(priceData.pricePLN, 0)} zł)`);
                 
                 initializeContent();
                 const saved = loadState();
@@ -1143,6 +1146,7 @@
         }
 
         let liveBusy = false;
+        const shownLive = {};   // co jest teraz w tabeli – opuszczenie pola bez zmiany nie robi z ceny „ręcznej”
         async function updateLiveROI(ev, silent) {
             if (liveBusy) return; liveBusy = true;
             try { await updateLiveROIInner(silent === true); } finally { liveBusy = false; }
@@ -1230,6 +1234,7 @@
                 }
                 
                 if (priceData) {
+                    shownLive[type] = { price: priceData.priceOriginal, units: actualUnits };
                     if (priceData.fake) anyFake = true;
                     if (priceData.time) lastQuoteTime = Math.max(lastQuoteTime, priceData.time);
                     // Zapisz kurs walutowy do edycji
@@ -1279,27 +1284,27 @@
                     
                     // Wyświetl średnią cenę w oryginalnej walucie (jeśli dostępna)
                     const avgDisplay = hasOriginalPrices && priceData.currency !== 'PLN'
-                        ? `${avgPriceOriginal.toFixed(2)} ${priceData.currency}`
-                        : `${(g.totalSpent / g.totalUnits).toFixed(2)} zł`;
+                        ? `${nf(avgPriceOriginal, 0)} ${priceData.currency}`
+                        : `${nf((g.totalSpent / g.totalUnits), 0)} zł`;
                     
                     const roiCurrencyDisplay = roiCurrency !== null
-                        ? `<span class="${currencyROIClass}">${roiCurrency >= 0 ? '+' : ''}${roiCurrency.toFixed(2)}%</span><br><small>(sam instrument)</small>`
+                        ? `<span class="${currencyROIClass}">${roiCurrency >= 0 ? '+' : ''}${nf(roiCurrency, 2)}%</span><br><small>(sam instrument)</small>`
                         : '-';
                     
                     html += `
                         <tr>
                             <td><strong>${type.toUpperCase()}</strong><br><small>${g.ticker}</small></td>
                             <td contenteditable="true" id="liveunits_${type}" style="background:var(--info-bg); padding:8px; border:2px solid var(--brass); cursor:text;" 
-                                onblur="updateLiveUnits('${type}', this.textContent)">${actualUnits.toFixed(type === 'btc' ? 8 : 4)}</td>
+                                onblur="updateLiveUnits('${type}', this.textContent)">${nf(actualUnits, type === 'btc' ? 8 : 4)}</td>
                             <td>${avgDisplay}</td>
                             <td contenteditable="true" id="liveprice_${type}" style="background:var(--edit-bg); padding:8px; border:2px solid var(--brass); cursor:text;" 
                                 onblur="updateLivePrice('${type}', this.textContent, '${priceData.currency}')" 
                                 data-currency="${priceData.currency}" 
-                                data-rate="${priceData.exchangeRate}">${priceData.priceOriginal.toFixed(2)} ${priceData.currency}${priceData.changePct != null ? ` <small class="${priceData.changePct >= 0 ? 'positive' : 'negative'}">${priceData.changePct >= 0 ? '▲ +' : '▼ '}${priceData.changePct.toFixed(2)}%</small>` : ''}${priceData.fake ? ' <small class="negative">⚠ cena zastępcza</small>' : ''}<br><small>(${priceData.pricePLN.toFixed(2)} zł)</small></td>
+                                data-rate="${priceData.exchangeRate}">${nf(priceData.priceOriginal, 0)} ${priceData.currency}${priceData.changePct != null ? ` <small class="${priceData.changePct >= 0 ? 'positive' : 'negative'}">${priceData.changePct >= 0 ? '▲ +' : '▼ '}${nf(priceData.changePct, 2)}%</small>` : ''}${priceData.fake ? ' <small class="negative">⚠ cena zastępcza</small>' : ''}<br><small>(${nf(priceData.pricePLN, 0)} zł)</small></td>
                             <td>${roiCurrencyDisplay}</td>
-                            <td>${currentValue.toFixed(2)} zł</td>
-                            <td class="${profitClass}">${profit >= 0 ? '+' : ''}${profit.toFixed(2)} zł</td>
-                            <td class="${profitClass}">${roiPLN >= 0 ? '+' : ''}${roiPLN.toFixed(2)}%<br><small>(z kursem)</small></td>
+                            <td>${nf(currentValue, 0)} zł</td>
+                            <td class="${profitClass}">${profit >= 0 ? '+' : ''}${nf(profit, 0)} zł</td>
+                            <td class="${profitClass}">${roiPLN >= 0 ? '+' : ''}${nf(roiPLN, 2)}%<br><small>(z kursem)</small></td>
                         </tr>
                     `;
                 }
@@ -1316,9 +1321,9 @@
                     <td>-</td>
                     <td>-</td>
                     <td>-</td>
-                    <td>${totalValue.toFixed(2)} zł</td>
-                    <td class="${totalProfitClass}">${totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)} zł</td>
-                    <td class="${totalProfitClass}">${totalProfit >= 0 ? '+' : ''}${totalROI.toFixed(2)}%</td>
+                    <td>${nf(totalValue, 0)} zł</td>
+                    <td class="${totalProfitClass}">${totalProfit >= 0 ? '+' : ''}${nf(totalProfit, 0)} zł</td>
+                    <td class="${totalProfitClass}">${totalProfit >= 0 ? '+' : ''}${nf(totalROI, 2)}%</td>
                 </tr>
             `;
             
@@ -1336,7 +1341,7 @@
                         <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--panel); border-radius:8px; margin-bottom:10px;">
                             <strong>${currency}/PLN:</strong>
                             <span contenteditable="true" id="rate_${currency}" style="background:var(--edit-bg); padding:8px 15px; border:2px solid var(--brass); border-radius:6px; min-width:100px; text-align:center; cursor:text;" 
-                                onblur="updateExchangeRate('${currency}', this.textContent)">${rate.toFixed(4)}</span>
+                                onblur="updateExchangeRate('${currency}', this.textContent)">${nf(rate, 4)}</span>
                         </div>
                     `;
                 }
@@ -1348,15 +1353,15 @@
             html += `
                 <div class="calc-row total-family" style="margin-top:20px;">
                     <span>💰 Suma wpłat:</span>
-                    <span>${totalInvested.toFixed(2)} zł</span>
+                    <span>${nf(totalInvested, 0)} zł</span>
                 </div>
                 <div class="calc-row total-family">
                     <span>📈 Wartość portfela:</span>
-                    <span>${totalValue.toFixed(2)} zł</span>
+                    <span>${nf(totalValue, 0)} zł</span>
                 </div>
                 <div class="calc-row total-family ${totalProfitClass}">
                     <span>🎯 Zysk/Strata:</span>
-                    <span>${totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)} zł (${totalProfit >= 0 ? '+' : ''}${totalROI.toFixed(2)}%)</span>
+                    <span>${totalProfit >= 0 ? '+' : ''}${nf(totalProfit, 0)} zł (${totalProfit >= 0 ? '+' : ''}${nf(totalROI, 2)}%)</span>
                 </div>
             `;
             
@@ -1454,11 +1459,11 @@
                 report += `${'='.repeat(80)}\n\n`;
 
                 report += `Podsumowanie:\n`;
-                report += `  Łącznie jednostek: ${g.totalUnits.toFixed(6)}\n`;
-                report += `  Łącznie wpłacono: ${g.totalAmount.toFixed(2)} PLN\n`;
-                report += `  Średnia cena (PLN): ${avgPricePLN.toFixed(2)} PLN/jedn\n`;
+                report += `  Łącznie jednostek: ${nf(g.totalUnits, 6)}\n`;
+                report += `  Łącznie wpłacono: ${nf(g.totalAmount, 0)} PLN\n`;
+                report += `  Średnia cena (PLN): ${nf(avgPricePLN, 0)} PLN/jedn\n`;
                 if (avgPriceOriginal > 0) {
-                    report += `  ⭐ Średnia cena (${g.currency}): ${avgPriceOriginal.toFixed(2)} ${g.currency}/jedn\n`;
+                    report += `  ⭐ Średnia cena (${g.currency}): ${nf(avgPriceOriginal, 0)} ${g.currency}/jedn\n`;
                 }
                 report += `\n`;
 
@@ -1473,7 +1478,7 @@
                     const curr = item.currency || '?';
                     const rate = item.exchangeRate ? item.exchangeRate.toFixed(4) : 'BRAK';
                     
-                    report += `${dateStr.padEnd(15)} | ${item.amount.toFixed(2).padStart(9)} | ${priceOrig.padStart(10)} | ${curr.padEnd(6)} | ${rate.padStart(7)} | ${item.units.toFixed(6)}\n`;
+                    report += `${dateStr.padEnd(15)} | ${item.amount.toFixed(2).padStart(9)} | ${priceOrig.padStart(10)} | ${curr.padEnd(6)} | ${rate.padStart(7)} | ${nf(item.units, 6)}\n`;
                 }
                 report += `${'─'.repeat(80)}\n`;
             }
@@ -1645,14 +1650,14 @@
                     <tr style="cursor:pointer;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='white'">
                         <td><strong>${p.type.toUpperCase()}</strong></td>
                         <td>${dateStr}</td>
-                        <td>${p.amount.toFixed(2)} zł</td>
+                        <td>${nf(p.amount, 2)} zł</td>
                         <td contenteditable="true" id="price_${key}" style="background:var(--edit-bg); padding:8px; border:2px solid var(--brass);" 
-                            onblur="updatePurchasePrice('${key}', this.textContent)">${p.priceOriginal ? p.priceOriginal.toFixed(2) : p.price.toFixed(2)}</td>
+                            onblur="updatePurchasePrice('${key}', this.textContent)">${nf(p.priceOriginal ? p.priceOriginal.toFixed(2) : p.price, 2)}</td>
                         <td>${currency}</td>
                         <td contenteditable="true" id="rate_${key}" style="background:var(--info-bg); padding:8px; border:2px solid var(--brass);" 
-                            onblur="updatePurchaseRate('${key}', this.textContent)">${exchangeRate.toFixed(4)}</td>
+                            onblur="updatePurchaseRate('${key}', this.textContent)">${nf(exchangeRate, 4)}</td>
                         <td contenteditable="true" id="units_${key}" style="background:var(--info-bg); padding:8px; border:2px solid var(--brass);" 
-                            onblur="updatePurchaseUnits('${key}', this.textContent)">${p.units.toFixed(6)}</td>
+                            onblur="updatePurchaseUnits('${key}', this.textContent)">${nf(p.units, 6)}</td>
                         <td><button onclick="deletePurchase('${key}')" style="background:rgba(236,106,97,.18); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">🗑️</button></td>
                     </tr>
                 `;
@@ -1682,7 +1687,7 @@
             p.units = p.amount / p.price;
             
             savePurchases();
-            showToast(`Zaktualizowano: ${oldPrice.toFixed(2)} → ${newPrice.toFixed(2)}`);
+            showToast(`Zaktualizowano: ${nf(oldPrice, 2)} → ${nf(newPrice, 2)}`);
         }
         
         function updatePurchaseUnits(key, newUnitsStr) {
@@ -1699,7 +1704,7 @@
             p.units = newUnits;
             
             savePurchases();
-            showToast(`Jednostki zaktualizowane: ${oldUnits.toFixed(6)} → ${newUnits.toFixed(6)}`);
+            showToast(`Jednostki zaktualizowane: ${nf(oldUnits, 6)} → ${nf(newUnits, 6)}`);
         }
         
         function updatePurchaseRate(key, newRateStr) {
@@ -1719,7 +1724,7 @@
             }
             
             savePurchases();
-            showToast(`Kurs zaktualizowany: ${oldRate.toFixed(4)} → ${newRate.toFixed(4)}`);
+            showToast(`Kurs zaktualizowany: ${nf(oldRate, 4)} → ${nf(newRate, 4)}`);
         }
         
         // Funkcje do edycji Live ROI
@@ -1734,9 +1739,10 @@
                 return;
             }
             
+            if (shownLive[type] && Math.abs(newPrice - Math.round(shownLive[type].price)) < 0.5) return;
             manualPrices[type] = { price: newPrice, currency: currency };
             localStorage.setItem('manualPrices', JSON.stringify(manualPrices));
-            showToast(`Cena ${type} zaktualizowana: ${newPrice.toFixed(2)} ${currency}`);
+            showToast(`Cena ${type} zaktualizowana: ${nf(newPrice, 2)} ${currency}`);
         }
         
         function updateLiveUnits(type, newUnitsStr) {
@@ -1746,9 +1752,10 @@
                 return;
             }
             
+            if (shownLive[type] && Math.abs(newUnits - shownLive[type].units) < 1e-8) return;
             manualUnits[type] = newUnits;
             localStorage.setItem('manualUnits', JSON.stringify(manualUnits));
-            showToast(`Jednostki ${type} zaktualizowane: ${newUnits.toFixed(4)}`);
+            showToast(`Jednostki ${type} zaktualizowane: ${nf(newUnits, 4)}`);
         }
         
         function updateExchangeRate(currency, newRateStr) {
@@ -1760,7 +1767,7 @@
             
             manualRates[currency] = newRate;
             localStorage.setItem('manualRates', JSON.stringify(manualRates));
-            showToast(`Kurs ${currency}/PLN zaktualizowany: ${newRate.toFixed(4)}`);
+            showToast(`Kurs ${currency}/PLN zaktualizowany: ${nf(newRate, 4)}`);
         }
         
         // ===== Bitcoin =====
@@ -1771,10 +1778,10 @@
             if (!keys.length) { box.innerHTML = '<p style="color:var(--muted);">Nie masz jeszcze zakupów BTC. Dodaj pierwszy powyżej, a pojawi się też w Live ROI.</p>'; return; }
             let units = 0, spent = 0;
             const rows = keys.map(k => { const p = purchases[k]; units += p.units; spent += p.amount;
-                return `<tr><td>${(p.date || '').slice(0, 10)}</td><td>${p.amount.toFixed(2)} zł</td><td>${p.units.toFixed(8)}</td><td>${p.priceOriginal ? p.priceOriginal.toFixed(0) + ' USD' : '-'}</td>
+                return `<tr><td>${(p.date || '').slice(0, 10)}</td><td>${nf(p.amount, 0)} zł</td><td>${nf(p.units, 8)}</td><td>${p.priceOriginal ? p.priceOriginal.toFixed(0) + ' USD' : '-'}</td>
                     <td><button class="btn clear" style="padding:4px 10px;" onclick="deleteBtcPurchase('${k}')">Usuń</button></td></tr>`; }).join('');
             box.innerHTML = `<table class="live-table"><thead><tr><th>Data</th><th>Kwota</th><th>BTC</th><th>Cena zakupu</th><th></th></tr></thead><tbody>${rows}
-                <tr><td><strong>Razem</strong></td><td><strong>${spent.toFixed(2)} zł</strong></td><td><strong>${units.toFixed(8)}</strong></td><td></td><td></td></tr></tbody></table>`;
+                <tr><td><strong>Razem</strong></td><td><strong>${nf(spent, 0)} zł</strong></td><td><strong>${nf(units, 8)}</strong></td><td></td><td></td></tr></tbody></table>`;
         }
         async function addBtcPurchase() {
             const amount = parseFloat(document.getElementById('btcAmount').value);
@@ -1791,7 +1798,7 @@
                 amount, price: pricePLN, priceOriginal: pricePLN / pd.exchangeRate, currency: 'USD', exchangeRate: pd.exchangeRate, units };
             savePurchases(); updateTotal(); renderBtc();
             ['btcAmount', 'btcUnits'].forEach(id => document.getElementById(id).value = '');
-            showToast(`Dodano zakup: ${units.toFixed(8)} BTC za ${amount.toFixed(2)} zł`);
+            showToast(`Dodano zakup: ${nf(units, 8)} BTC za ${nf(amount, 0)} zł`);
         }
         function deleteBtcPurchase(key) {
             if (!confirm('Usunąć ten zakup BTC?')) return;
