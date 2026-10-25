@@ -1264,7 +1264,11 @@
                         }
                     }
                     
-                    const avgPriceOriginal = totalWeightedPrice / g.totalUnits;
+                    const avgCalc = totalWeightedPrice / g.totalUnits;
+                    // średnią cenę można wpisać ręcznie (np. z XTB) zamiast poprawiać każdy zakup
+                    const avgManual = manualAvg[type] && manualAvg[type].currency === priceData.currency ? manualAvg[type].price : null;
+                    const avgPriceOriginal = avgManual ?? avgCalc;
+                    if (avgManual != null) hasOriginalPrices = true;
                     
                     // ROI w walucie oryginalnej (bez wpływu kursu)
                     const roiCurrency = hasOriginalPrices && priceData.currency !== 'PLN'
@@ -1284,9 +1288,10 @@
                     const currencyROIClass = roiCurrency !== null ? (roiCurrency >= 0 ? 'positive' : 'negative') : '';
                     
                     // Wyświetl średnią cenę w oryginalnej walucie (jeśli dostępna)
-                    const avgDisplay = hasOriginalPrices && priceData.currency !== 'PLN'
-                        ? `${nf(avgPriceOriginal, 2)} ${priceData.currency}`
-                        : `${nf((g.totalSpent / g.totalUnits), 2)} zł`;
+                    const avgCur = hasOriginalPrices && priceData.currency !== 'PLN' ? priceData.currency : 'PLN';
+                    const avgVal = avgCur === 'PLN' ? g.totalSpent / g.totalUnits : avgPriceOriginal;
+                    shownLive[type].avg = avgVal;
+                    const avgDisplay = `${nf(avgVal, 2)} ${avgCur === 'PLN' ? 'zł' : avgCur}${avgManual != null ? '<br><small>✎ wpisana ręcznie</small>' : ''}`;
                     
                     const roiCurrencyDisplay = roiCurrency !== null
                         ? `<span class="${currencyROIClass}">${roiCurrency >= 0 ? '+' : ''}${nf(roiCurrency, 2)}%</span><br><small>(sam instrument)</small>`
@@ -1297,7 +1302,8 @@
                             <td><strong>${type.toUpperCase()}</strong><br><small>${g.ticker}</small></td>
                             <td contenteditable="true" id="liveunits_${type}" style="background:var(--info-bg); padding:8px; border:2px solid var(--brass); cursor:text;" 
                                 onblur="updateLiveUnits('${type}', this.textContent)">${nf(actualUnits, type === 'btc' ? 8 : 4)}</td>
-                            <td>${avgDisplay}</td>
+                            <td contenteditable="true" id="liveavg_${type}" title="Wpisz średnią cenę z XTB. Wyczyść pole, aby wrócić do wyliczonej." style="background:var(--edit-bg); padding:8px; border:2px solid var(--brass); cursor:text;"
+                                onblur="updateLiveAvg('${type}', this.textContent, '${avgCur}')">${avgDisplay}</td>
                             <td contenteditable="true" id="liveprice_${type}" style="background:var(--edit-bg); padding:8px; border:2px solid var(--brass); cursor:text;" 
                                 onblur="updateLivePrice('${type}', this.textContent, '${priceData.currency}')" 
                                 data-currency="${priceData.currency}" 
@@ -1732,6 +1738,23 @@
         let manualPrices = JSON.parse(localStorage.getItem('manualPrices') || '{}');
         let manualUnits = JSON.parse(localStorage.getItem('manualUnits') || '{}');
         let manualRates = JSON.parse(localStorage.getItem('manualRates') || '{}');
+        let manualAvg = JSON.parse(localStorage.getItem('manualAvg') || '{}');
+
+        function updateLiveAvg(type, str, currency) {
+            const clean = str.replace(/✎.*$/s, '').replace(/[^\d.,]/g, '').replace(',', '.');
+            if (!clean) {   // puste pole = wróć do średniej wyliczonej z zakupów
+                if (manualAvg[type]) { delete manualAvg[type]; localStorage.setItem('manualAvg', JSON.stringify(manualAvg)); showToast('Średnia cena znowu liczona z zakupów'); updateLiveROI(); }
+                return;
+            }
+            const v = parseFloat(clean);
+            if (isNaN(v) || v <= 0) { alert('Nieprawidłowa cena!'); return; }
+            if (shownLive[type] && Math.abs(v - shownLive[type].avg) < 0.005) return;
+            if (currency === 'PLN') { alert('Średnią możesz wpisać tylko dla walorów w USD/EUR.'); return; }
+            manualAvg[type] = { price: v, currency };
+            localStorage.setItem('manualAvg', JSON.stringify(manualAvg));
+            showToast(`Średnia cena ${type.toUpperCase()}: ${nf(v, 2)} ${currency}`);
+            updateLiveROI();
+        }
         
         function updateLivePrice(type, newPriceStr, currency) {
             const newPrice = parseFloat(newPriceStr.replace(/[^\d.,]/g, '').replace(',', '.'));
