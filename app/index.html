@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Tracker Inwestycji - Plan Rodzinny</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height:100vh; padding:20px; }
+        .container { max-width:1400px; margin:0 auto; background:white; border-radius:20px; padding:30px; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+        h1 { text-align:center; color:#333; margin-bottom:10px; font-size:2.5em; }
+        .subtitle { text-align:center; color:#666; margin-bottom:30px; font-size:1.1em; }
+        .summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; margin-bottom:20px; }
+        .summary-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; padding:25px; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.2); }
+        .summary-card h3 { font-size:0.9em; opacity:0.9; margin-bottom:10px; }
+        .summary-card .value { font-size:2em; font-weight:bold; }
+
+        .tabs { display:flex; gap:10px; margin-bottom:20px; border-bottom:2px solid #eee; flex-wrap:wrap; }
+        .tab { padding:15px 20px; background:none; border:none; cursor:pointer; font-size:1.05em; color:#666; border-bottom:3px solid transparent; transition:all .2s; border-radius:8px 8px 0 0; }
+        .tab.active { color:#667eea; border-bottom-color:#667eea; font-weight:bold; background: #fff; }
+        .tab:hover { color:#667eea; }
+
+        .tab-content { display:none; }
+        .tab-content.active { display:block; }
+
+        .year-section { margin-bottom:20px; border:2px solid #eee; border-radius:15px; padding:15px; background:#fafafa; }
+        .year-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:10px; border-bottom:2px solid #ddd; }
+        .year-title { font-size:1.1em; font-weight:bold; color:#333; }
+        .year-total { font-size:1em; color:#667eea; font-weight:bold; }
+
+        .months-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px; margin-bottom:10px; }
+        .month-check { display:flex; align-items:center; gap:8px; padding:10px; background:white; border-radius:8px; cursor:pointer; transition:all .2s; }
+        .month-check:hover { background:#f0f0f0; }
+        .month-check input[type="checkbox"] { width:20px; height:20px; cursor:pointer; }
+
+        .purchase-btn { 
+            background:#ff9800; 
+            color:white; 
+            border:none; 
+            padding:4px 8px; 
+            border-radius:4px; 
+            cursor:pointer; 
+            font-size:0.85em;
+            margin-left:auto;
+        }
+        .purchase-btn:hover { background:#f57c00; }
+        .purchase-btn.saved { background:#4caf50; }
+
+        .extra-input { margin-top:10px; padding:12px; background:white; border-radius:10px; }
+        .extra-input label { display:block; margin-bottom:8px; font-weight:bold; color:#333; }
+        .extra-input input { width:100%; padding:10px; border:2px solid #ddd; border-radius:8px; font-size:1em; }
+
+        .calculation { background:#e8f5e9; padding:20px; border-radius:10px; margin-top:10px; }
+        .calculation h2 { color:#2e7d32; margin-bottom:15px; }
+        .calculation h3 { color:#764ba2; margin-bottom:10px; margin-top:15px; }
+        .calc-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #c8e6c9; }
+        .calc-row:last-child { border-bottom:none; }
+        .calc-row.total-family { background:#d1c4e9; padding:15px; border-radius:8px; margin-top:15px; font-weight:bold; }
+        .calc-row.subtotal { font-weight:bold; border-bottom:2px solid #764ba2; }
+
+        .live-table { width:100%; border-collapse:collapse; margin:20px 0; }
+        .live-table th, .live-table td { padding:12px; text-align:left; border-bottom:1px solid #ddd; }
+        .live-table th { background:#764ba2; color:white; }
+        .live-table tr:hover { background:#f5f5f5; }
+        .positive { color:#2e7d32; font-weight:bold; }
+        .negative { color:#c62828; font-weight:bold; }
+
+        .controls { display:flex; gap:10px; justify-content:flex-end; margin-bottom:10px; align-items:center; }
+        .btn { padding:10px 14px; border-radius:8px; border:none; cursor:pointer; font-weight:bold; }
+        .btn.save { background:#2e7d32; color:#fff; }
+        .btn.clear { background:#e53935; color:#fff; }
+
+        .info-box { background:#fff3cd; border-left:4px solid #ffc107; padding:15px; margin:15px 0; border-radius:8px; }
+        .info-box strong { color:#856404; }
+
+        @media print { body { background:white; } .container { box-shadow:none; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 Tracker Inwestycji</h1>
+        <p class="subtitle">Plan Rodzinny: XTB | Wiek 35→67 (32 lata) | 💹 Ceny live z Yahoo Finance</p>
+
+        <div class="info-box" style="background:#e3f2fd; border-left-color:#2196f3;">
+            <strong>🎯 Automatyczne pobieranie cen z Yahoo Finance!</strong><br>
+            Tracker używa DOKŁADNIE Twoich tickerów z XTB:<br>
+            • S&P 500 ŻONA: CSPX.L (USD - przeliczone z GBP)<br>
+            • S&P 500 TY: VUAA.L (USD - przeliczone z GBP)<br>
+            • Złoto (TY + ŻONA): IGLN.L (USD - przeliczone z GBP)<br>
+            • Uran: NUKL.DE (EUR - bezpośrednio z Xetra)<br>
+            Kursy walut: Frankfurter API (EUR/PLN, USD/PLN, GBP/USD)
+        </div>
+
+        <div class="summary">
+            <div class="summary-card">
+                <h3>Wartość docelowa (razem)</h3>
+                <div class="value">~1,900,000 zł</div>
+            </div>
+            <div class="summary-card">
+                <h3>Suma wpłat</h3>
+                <div class="value" id="totalInvested">0 zł</div>
+            </div>
+            <div class="summary-card">
+                <h3>Przewidywany zysk</h3>
+                <div class="value" id="totalProfit">~1,900,000 zł</div>
+            </div>
+            <div class="summary-card">
+                <h3>ROI</h3>
+                <div class="value" id="roi">∞%</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="saveBtn" class="btn save">💾 Zapisz zmiany</button>
+            <button id="exportBtn" class="btn" style="background:#ff9800;">📤 Eksport danych zakupów</button>
+            <button id="importBtn" class="btn" style="background:#2196f3; color:white;">📥 Import danych zakupów</button>
+            <input type="file" id="importFile" accept=".json" style="display:none;">
+            <button id="clearBtn" class="btn clear" title="Usuń zapisane dane lokalne">🧹 Wyczyść zapisane</button>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Zakładki">
+            <button class="tab active" data-tab="obligacje">📊 Obligacje</button>
+            <button class="tab" data-tab="uran">☢️ ETF Uran</button>
+            <button class="tab" data-tab="cameco">🏭 Cameco</button>
+            <button class="tab" data-tab="sp500">📈 ETF S&P 500</button>
+            <button class="tab" data-tab="goldty">🥇 Złoto (TY)</button>
+            <button class="tab" data-tab="ppk">🏦 PPK</button>
+            <button class="tab" data-tab="zonasp">💍 ŻONA S&P500</button>
+            <button class="tab" data-tab="zonagold">💍 ŻONA Złoto</button>
+            <button class="tab" data-tab="liveroi">📊 Live ROI</button>
+            <button class="tab" data-tab="summary">📋 Podsumowanie</button>
+        </div>
+
+        <div id="obligacje" class="tab-content active">
+            <h2>Obligacje (EDO + TOS)</h2>
+            <p style="margin-bottom: 12px; color: #666;">200 zł/mies bazowo + schodkowe extra</p>
+            <div id="obligacjeContent"></div>
+        </div>
+
+        <div id="uran" class="tab-content">
+            <h2>ETF Uran (XTB - Twoje konto)</h2>
+            <p style="margin-bottom: 12px; color: #666;">121,28 zł/mies (po realokacji z Bitcoina) + extra schodkowe (1/4, 1/6, 1/12)</p>
+            <div id="uranContent"></div>
+        </div>
+
+        <div id="cameco" class="tab-content">
+            <h2>🏭 Cameco Corp - Akcje (XTB)</h2>
+            <p style="margin-bottom: 12px; color: #666;">84,89 zł/mies (po realokacji z Bitcoina) | Dywidenda: ~0.18% rocznie | Ticker: CCJ (NYSE)</p>
+            <div id="camecoContent"></div>
+        </div>
+
+        <div id="sp500" class="tab-content">
+            <h2>ETF S&P 500 (XTB - Twoje konto)</h2>
+            <p style="margin-bottom: 12px; color: #666;">121,28 zł/mies (po realokacji z Bitcoina) + extra schodkowe (1/4, 1/6, 1/12)</p>
+            <div id="sp500Content"></div>
+        </div>
+
+        <div id="goldty" class="tab-content">
+            <h2>🥇 Złoto (XTB - Twoje konto)</h2>
+            <p style="margin-bottom: 12px; color: #666;">iShares Physical Gold ETC (TER: 0.12%) | 84,89 zł/mies (po realokacji z Bitcoina)</p>
+            <div class="info-box">
+                <strong>Ticker:</strong> IGLN (IE00B4NCH459)<br>
+                <strong>Plan:</strong> 84,89 zł × 384 mies = 32,598 zł wpłat
+            </div>
+            <div id="goldtyContent"></div>
+        </div>
+
+        <div id="ppk" class="tab-content">
+            <h2>🏦 PPK - Pracownicze Plany Kapitałowe</h2>
+            <p style="margin-bottom: 12px; color: #666;">Fundusz: PZU FZD 2050 | ~280 zł/mies (Ty + Pracodawca + Państwo)</p>
+            <div class="info-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 15px 0; color: white;">💰 Stan PPK (październik 2025)</h3>
+                <div style="font-size: 2em; font-weight: bold; margin-bottom: 10px;">22,861 zł</div>
+                <div style="opacity: 0.9;">
+                    <strong>Twoje wpłaty:</strong> 8,657 zł<br>
+                    <strong>Pracodawca:</strong> 6,500 zł<br>
+                    <strong>Państwo:</strong> 1,450 zł<br>
+                    <strong>Średnia miesięczna:</strong> ~280 zł (59 miesięcy wpłat)
+                </div>
+            </div>
+            <div class="info-box">
+                <strong>📊 Portfel PPK (PZU 2050):</strong><br>
+                • Akcje: 51.7%<br>
+                • Obligacje: 9.6%<br>
+                • Inne: 38.7%<br>
+                <br>
+                <strong>Założenia:</strong><br>
+                • Stopa zwrotu: 7% rocznie (mix akcji i obligacji)<br>
+                • Wpłaty: 280 zł/mies przez kolejne 31 lat<br>
+                • Prognoza na wiek 67: <strong>~330,000 zł</strong> 🚀
+            </div>
+            <div id="ppkContent"></div>
+        </div>
+
+        <div id="zonasp" class="tab-content">
+            <h2>💍 "ŻONA" S&P 500 (XTB)</h2>
+            <p style="margin-bottom: 12px; color: #666;">121,28 zł/mies (po realokacji z Bitcoina)</p>
+            <div class="info-box">
+                <strong>XTB konto "ŻONY" - S&P 500:</strong><br>
+                • ETF S&P 500: 121,28 zł/mies<br>
+                • iShares Core S&P 500 UCITS ETF (CSPX)
+            </div>
+            
+            <div id="zonaspContent"></div>
+        </div>
+
+        <div id="zonagold" class="tab-content">
+            <h2>💍 "ŻONA" Złoto (XTB)</h2>
+            <p style="margin-bottom: 12px; color: #666;">36,38 zł/mies (po realokacji z Bitcoina)</p>
+            <div class="info-box">
+                <strong>XTB konto "ŻONY" - Złoto:</strong><br>
+                • iShares Physical Gold ETC (IGLN): 36,38 zł/mies<br>
+                • Ticker: IE00B4NCH459
+            </div>
+            
+            <div id="zonagoldContent"></div>
+        </div>
+
+        <div id="liveroi" class="tab-content">
+            <div class="calculation">
+                <h2>📊 Rzeczywisty ROI - Portfolio Live</h2>
+                <p style="margin-bottom:20px; color:#666;">Tracker rzeczywistych zakupów z cenami rynkowymi</p>
+                
+                <div style="margin-bottom:20px; display:flex; gap:10px;">
+                    <button id="refreshPrices" class="btn save" style="flex:1;">🔄 Odśwież ceny rynkowe</button>
+                    <button id="editPurchases" class="btn" style="flex:1; background:#ff9800;">📝 Edytuj zakupy</button>
+                    <button id="exportReport" class="btn" style="flex:1; background:#9c27b0; color:white;">📄 Raport tekstowy</button>
+                </div>
+
+                <div id="liveRoiContent">
+                    <p style="text-align:center; color:#999; padding:40px;">Zaznacz checkboxy w zakładkach i kliknij "💰 Zapisz cenę" aby śledzić rzeczywiste ROI</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="summary" class="tab-content">
+            <div class="calculation">
+                <h2>📊 Symulacja końcowa (wiek 67)</h2>
+
+                <h3>🧔 TWOJE INWESTYCJE:</h3>
+                <div class="calc-row">
+                    <span>Obligacje (EDO + TOS):</span>
+                    <span>295,500 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>ETF Uran (121,28 zł/m, 11% rocznie):</span>
+                    <span>~392,200 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>🏭 Cameco akcje (84,89 zł/m, 11% rocznie):</span>
+                    <span>~274,600 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>ETF S&P 500 (121,28 zł/m, 10% rocznie):</span>
+                    <span>~341,200 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>Złoto (84,89 zł/m, 6% rocznie):</span>
+                    <span>~57,700 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>🏦 PPK (280 zł/m + start 22,861 zł, 7% rocznie):</span>
+                    <span>~330,000 zł</span>
+                </div>
+                <div class="calc-row subtotal">
+                    <span>RAZEM (TY):</span>
+                    <span>~1,691,200 zł</span>
+                </div>
+
+                <h3>💍 "ŻONA":</h3>
+                <div class="calc-row">
+                    <span>ETF S&P 500 (121,28 zł/m, 10% rocznie):</span>
+                    <span>~333,500 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>Złoto (36,38 zł/m, 6% rocznie):</span>
+                    <span>~24,700 zł</span>
+                </div>
+                <div class="calc-row subtotal">
+                    <span>RAZEM ("ŻONA"):</span>
+                    <span>~358,200 zł</span>
+                </div>
+
+                <div class="calc-row total-family">
+                    <span>🏆 RAZEM RODZINA NA EMERYTURZE:</span>
+                    <span>~2,049,400 zł</span>
+                </div>
+
+                <h2 style="margin-top: 25px;">💡 Wpłaty (bazowe + extra)</h2>
+                <div class="calc-row">
+                    <span>Obligacje bazowe (200 zł × 384 mies):</span>
+                    <span>76,800 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>Extra obligacje (1-20 lat):</span>
+                    <span>10,000 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>ETF Uran (121,28 zł × 384 mies):</span>
+                    <span>46,571 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>Extra Uran (32 lata):</span>
+                    <span>~9,600 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>🏭 Cameco akcje (84,89 zł × 384 mies):</span>
+                    <span>32,598 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>ETF S&P500 TY (121,28 zł × 384 mies):</span>
+                    <span>46,571 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>Extra S&P500 TY (32 lata):</span>
+                    <span>~9,600 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>Złoto TY (84,89 zł × 384 mies):</span>
+                    <span>32,598 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>🏦 PPK (280 zł × 372 mies*):</span>
+                    <span>104,160 zł</span>
+                </div>
+                <div class="calc-row" style="font-size: 0.9em; opacity: 0.8;">
+                    <span>* 31 lat (384m) minus 12m już wpłacone</span>
+                    <span></span>
+                </div>
+                <div class="calc-row">
+                    <span>XTB "ŻONA" S&P500 (121,28 zł × 384 mies):</span>
+                    <span>46,571 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>XTB "ŻONA" Złoto (36,38 zł × 384 mies):</span>
+                    <span>13,970 zł</span>
+                </div>
+                <div class="calc-row">
+                    <span>Dopłaty reinwestycji:</span>
+                    <span>~3,500 zł</span>
+                </div>
+                <div class="calc-row subtotal">
+                    <span>SUMA WPŁAT:</span>
+                    <span>~432,540 zł</span>
+                </div>
+                <div class="calc-row subtotal">
+                    <span>ZYSK:</span>
+                    <span>~1,632,060 zł</span>
+                </div>
+                <div class="calc-row subtotal">
+                    <span>ROI:</span>
+                    <span>~377%</span>
+                </div>
+
+                <h2 style="margin-top: 25px;">📍 Ustawienia XTB (proporcje %)</h2>
+                <div class="info-box">
+                    <strong>TWOJE KONTO XTB (412,34 zł/mies):</strong><br>
+                    • ETF Uran (NUKL): 29.4% (121,28 zł)<br>
+                    • 🏭 Cameco akcje (CCJ): 20.6% (84,89 zł)<br>
+                    • ETF S&P 500: 29.4% (121,28 zł)<br>
+                    • Invesco Physical Gold: 20.6% (84,89 zł)<br>
+                    <br>
+                    <em style="color:#ff9800;">💡 Sektor uranowy łącznie: 206,17 zł/mies (50% alokacji w Cameco)</em>
+                </div>
+
+                <div class="info-box">
+                    <strong>KONTO "ŻONY" XTB (157,66 zł/mies):</strong><br>
+                    • ETF S&P 500: 76.9% (121,28 zł)<br>
+                    • Invesco Physical Gold: 23.1% (36,38 zł)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const months = ['Sty','Lut','Mar','Kwi','Maj','Cze','Lip','Sie','Wrz','Paź','Lis','Gru'];
+        const STORAGE_KEY = 'eMERYTURA_STATE_v5';
+        const PURCHASES_KEY = 'eMERYTURA_PURCHASES_v1';
+
+        const TICKERS = {
+            'zonasp': 'IE00B5BMR087',    // S&P 500 ŻONA (CSPX)
+            'zonagold': 'IE00B4NCH459',  // Złoto ŻONA (IGLN)
+            'sp500': 'IE00BFMXXD54',     // S&P 500 TY (VUAA)
+            'uran': 'IE000M7V94E1',      // Uran TY (NUKL)
+            'cameco': 'CCJ',             // Cameco Corp (akcje)
+            'goldty': 'IE00B4NCH459',    // Złoto TY (IGLN)
+            'ppk': 'PPK'                 // PPK (manual tracking)
+        };
+
+        // ===== PRELOADED PURCHASES Z XTB PDF (18/11/2025) =====
+        let purchases = {
+            // === URAN (NUKL.DE) w EUR ===
+            'uran_20251013': {
+                date: '2025-10-13T09:04:24Z',
+                ticker: 'IE000M7V94E1',
+                type: 'uran',
+                amount: 97.74,
+                price: 232.43,
+                priceOriginal: 54.69,
+                currency: 'EUR',
+                exchangeRate: 4.25,
+                units: 0.4172
+            },
+            'uran_20251016': {
+                date: '2025-10-16T16:18:40Z',
+                ticker: 'IE000M7V94E1',
+                type: 'uran',
+                amount: 82.64,
+                price: 254.66,
+                priceOriginal: 59.92,
+                currency: 'EUR',
+                exchangeRate: 4.25,
+                units: 0.3229
+            },
+            'uran_20251020': {
+                date: '2025-10-20T14:24:51Z',
+                ticker: 'IE000M7V94E1',
+                type: 'uran',
+                amount: 49.49,
+                price: 241.82,
+                priceOriginal: 56.90,
+                currency: 'EUR',
+                exchangeRate: 4.25,
+                units: 0.2038
+            },
+            'uran_20251107': {
+                date: '2025-11-07T16:34:51Z',
+                ticker: 'IE000M7V94E1',
+                type: 'uran',
+                amount: 98.97,
+                price: 206.80,
+                priceOriginal: 48.665,
+                currency: 'EUR',
+                exchangeRate: 4.25,
+                units: 0.4767
+            },
+            'uran_20251110': {
+                date: '2025-11-10T09:20:30Z',
+                ticker: 'IE000M7V94E1',
+                type: 'uran',
+                amount: 7.40,
+                price: 219.60,
+                priceOriginal: 51.67,
+                currency: 'EUR',
+                exchangeRate: 4.25,
+                units: 0.0336
+            },
+            
+            // === S&P 500 TY (VUAA.UK) w USD ===
+            'sp500_20251013': {
+                date: '2025-10-13T09:00:48Z',
+                ticker: 'IE00BFMXXD54',
+                type: 'sp500',
+                amount: 98.98,
+                price: 509.60,
+                priceOriginal: 127.44,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.2106
+            },
+            'sp500_20251016': {
+                date: '2025-10-16T16:18:40Z',
+                ticker: 'IE00BFMXXD54',
+                type: 'sp500',
+                amount: 82.61,
+                price: 513.20,
+                priceOriginal: 128.30,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.1759
+            },
+            'sp500_20251020': {
+                date: '2025-10-20T14:24:51Z',
+                ticker: 'IE00BFMXXD54',
+                type: 'sp500',
+                amount: 49.48,
+                price: 512.88,
+                priceOriginal: 128.22,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.1054
+            },
+            'sp500_20251107': {
+                date: '2025-11-07T16:34:51Z',
+                ticker: 'IE00BFMXXD54',
+                type: 'sp500',
+                amount: 98.98,
+                price: 512.16,
+                priceOriginal: 128.04,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.2100
+            },
+            'sp500_20251110': {
+                date: '2025-11-10T09:00:51Z',
+                ticker: 'IE00BFMXXD54',
+                type: 'sp500',
+                amount: 7.04,
+                price: 520.16,
+                priceOriginal: 130.04,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.0147
+            },
+            
+            // === S&P 500 ŻONA (CSPX.UK) w USD ===
+            'zonasp_20251110_01': {
+                date: '2025-11-10T09:09:58Z',
+                ticker: 'IE00B5BMR087',
+                type: 'zonasp',
+                amount: 134.03,
+                price: 2899.96,
+                priceOriginal: 724.99,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.0502
+            },
+            'zonasp_20251110_02': {
+                date: '2025-11-10T09:56:44Z',
+                ticker: 'IE00B5BMR087',
+                type: 'zonasp',
+                amount: 4.54,
+                price: 2903.72,
+                priceOriginal: 725.93,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.0017
+            },
+            'zonasp_20251110_03': {
+                date: '2025-11-10T09:58:49Z',
+                ticker: 'IE00B5BMR087',
+                type: 'zonasp',
+                amount: 159.76,
+                price: 2904.24,
+                priceOriginal: 726.06,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.0598
+            },
+            'zonasp_20251117': {
+                date: '2025-11-17T09:00:45Z',
+                ticker: 'IE00B5BMR087',
+                type: 'zonasp',
+                amount: 76.26,
+                price: 2898.20,
+                priceOriginal: 724.55,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.0288
+            },
+            
+            // === ZŁOTO (IGLN.UK) w USD - TY + ŻONA razem ===
+            // Złoto TY (70 zł/mies)
+            'goldty_20251110_01': {
+                date: '2025-11-10T09:00:45Z',
+                ticker: 'IE00B4NCH459',
+                type: 'goldty',
+                amount: 88.61,  // część z 126.87 (70%)
+                price: 316.72,
+                priceOriginal: 79.18,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.3045  // 70% z 0.435
+            },
+            'goldty_20251110_02': {
+                date: '2025-11-10T09:56:44Z',
+                ticker: 'IE00B4NCH459',
+                type: 'goldty',
+                amount: 62.52,  // część z 89.32 (70%)
+                price: 317.02,
+                priceOriginal: 79.255,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.2144  // 70% z 0.3063
+            },
+            'goldty_20251110_03': {
+                date: '2025-11-10T09:58:49Z',
+                ticker: 'IE00B4NCH459',
+                type: 'goldty',
+                amount: 5.88,  // część z 8.40 (70%)
+                price: 317.00,
+                priceOriginal: 79.25,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.02016  // 70% z 0.0288
+            },
+            'goldty_20251110_04': {
+                date: '2025-11-10T10:02:46Z',
+                ticker: 'IE00B4NCH459',
+                type: 'goldty',
+                amount: 58.90,  // część z 84.14 (70%)
+                price: 316.93,
+                priceOriginal: 79.2325,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.20202  // 70% z 0.2886
+            },
+            'goldty_20251117': {
+                date: '2025-11-17T09:00:45Z',
+                ticker: 'IE00B4NCH459',
+                type: 'goldty',
+                amount: 15.88,  // część z 22.69 (70%)
+                price: 317.51,
+                priceOriginal: 79.3775,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.05474  // 70% z 0.0782
+            },
+            
+            // Złoto ŻONA (30 zł/mies)
+            'zonagold_20251110_01': {
+                date: '2025-11-10T09:00:45Z',
+                ticker: 'IE00B4NCH459',
+                type: 'zonagold',
+                amount: 38.26,  // część z 126.87 (30%)
+                price: 316.72,
+                priceOriginal: 79.18,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.1305  // 30% z 0.435
+            },
+            'zonagold_20251110_02': {
+                date: '2025-11-10T09:56:44Z',
+                ticker: 'IE00B4NCH459',
+                type: 'zonagold',
+                amount: 26.80,  // część z 89.32 (30%)
+                price: 317.02,
+                priceOriginal: 79.255,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.0919  // 30% z 0.3063
+            },
+            'zonagold_20251110_03': {
+                date: '2025-11-10T09:58:49Z',
+                ticker: 'IE00B4NCH459',
+                type: 'zonagold',
+                amount: 2.52,  // część z 8.40 (30%)
+                price: 317.00,
+                priceOriginal: 79.25,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.00864  // 30% z 0.0288
+            },
+            'zonagold_20251110_04': {
+                date: '2025-11-10T10:02:46Z',
+                ticker: 'IE00B4NCH459',
+                type: 'zonagold',
+                amount: 25.24,  // część z 84.14 (30%)
+                price: 316.93,
+                priceOriginal: 79.2325,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.08658  // 30% z 0.2886
+            },
+            'zonagold_20251117': {
+                date: '2025-11-17T09:00:45Z',
+                ticker: 'IE00B4NCH459',
+                type: 'zonagold',
+                amount: 6.81,  // część z 22.69 (30%)
+                price: 317.51,
+                priceOriginal: 79.3775,
+                currency: 'USD',
+                exchangeRate: 4.00,
+                units: 0.02346  // 30% z 0.0782
+            }
+        };
+
+        function getExtraAmount(year, type) {
+            if (type === 'obligacje') {
+                if (year <= 10) return 600;
+                if (year <= 20) return 400;
+                return 0;
+            } else if (type === 'goldty' || type === 'cameco' || type === 'ppk' || type === 'zonagold' || type === 'zonasp') {
+                return 0;
+            } else {
+                if (year <= 10) return 300;
+                if (year <= 20) return 200;
+                return 100;
+            }
+        }
+
+        function getBaseMonthly(type) {
+            const map = {
+                'obligacje': 200,
+                'uran': 121.28,
+                'cameco': 84.89,
+                'sp500': 121.28,
+                'goldty': 84.89,
+                'ppk': 280,
+                'zonasp': 121.28,   // ŻONA S&P500
+                'zonagold': 36.38   // ŻONA Złoto
+            };
+            return map[type] || 100;
+        }
+
+        function deleteExtraPurchase(key) {
+            if (confirm('Usunąć tę wpłatę extra?')) {
+                delete purchases[key];
+                savePurchases();
+                showToast('Usunięto wpłatę extra');
+                initializeContent();
+                const saved = loadState();
+                if (saved) applyState(saved);
+            }
+        }
+
+        function createYearSection(year, type) {
+            const extra = getExtraAmount(year, type);
+            const baseMonthly = getBaseMonthly(type);
+            const baseYearly = baseMonthly * 12;
+            
+            const isZonaSP = (type === 'zonasp');
+            const isZonaGold = (type === 'zonagold');
+            const hasTicker = TICKERS[type] !== undefined;
+
+            let extraSpent = 0;
+            for (const key in purchases) {
+                if (key.startsWith(`${type}_extra_y${year}_`) && purchases[key]) {
+                    extraSpent += purchases[key].amount;
+                }
+            }
+            const extraRemaining = extra - extraSpent;
+
+            return `
+                <div class="year-section">
+                    <div class="year-header">
+                        <div class="year-title">Rok ${year} (wiek ${34 + year})</div>
+                        <div class="year-total">Cel: ${baseYearly}${extra > 0 && !isZonaSP && !isZonaGold ? ' + ' + extra : ''} zł</div>
+                    </div>
+
+                    <div class="months-grid">
+                        ${months.map((m,i) => {
+                            const checkboxId = `${type}_y${year}_m${i+1}`;
+                            const hasPurchase = purchases[checkboxId] ? 'saved' : '';
+                            return `
+                            <div class="month-check">
+                                <input type="checkbox" id="${checkboxId}" onchange="onFieldChange()">
+                                <label for="${checkboxId}">${m} (${baseMonthly} zł)</label>
+                                ${hasTicker ? `<button class="purchase-btn ${hasPurchase}" onclick="savePurchasePrice('${checkboxId}', '${type}', ${baseMonthly})">💰</button>` : ''}
+                            </div>
+                        `}).join('')}
+                    </div>
+
+                    ${extra > 0 && !isZonaSP && !isZonaGold ? `
+                        <div class="extra-input">
+                            <label>Extra wpłata roczna (cel: ${extra} zł, pozostało: ${extraRemaining.toFixed(0)} zł):</label>
+                            <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+                                <input type="number" id="${type}_extra_input_y${year}" value="" placeholder="Wpisz kwotę..." style="flex:1;">
+                                ${hasTicker ? `<button class="purchase-btn" onclick="saveExtraPurchasePrice('${type}', ${year})" style="padding:10px 15px; font-size:1em;">💰 Dodaj</button>` : ''}
+                            </div>
+                            <div id="${type}_extra_list_y${year}" style="font-size:0.9em; color:#666;">
+                                ${Object.keys(purchases).filter(k => k.startsWith(`${type}_extra_y${year}_`)).map(key => {
+                                    const p = purchases[key];
+                                    return `<div style="padding:5px; background:#f0f0f0; border-radius:5px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+                                        <span>✅ ${p.amount} zł (${p.priceOriginal?.toFixed(2)} ${p.currency} × ${p.units?.toFixed(4)})</span>
+                                        <button onclick="deleteExtraPurchase('${key}')" style="background:#e53935; color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer; font-size:0.85em;">🗑️</button>
+                                    </div>`;
+                                }).join('') || '<span style="color:#999;">Brak wpłat extra</span>'}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function initializeContent() {
+            ['obligacje','uran','cameco','sp500','goldty','ppk','zonasp','zonagold'].forEach(type => {
+                const content = document.getElementById(type + 'Content');
+                let html = '';
+                for (let year = 1; year <= 32; year++) html += createYearSection(year, type);
+                content.innerHTML = html;
+            });
+        }
+
+        function updateTotal() {
+            // Liczy sumę wpłat z PRAWDZIWYCH zakupów (purchases)
+            let totalFromPurchases = 0;
+            for (const key in purchases) {
+                totalFromPurchases += purchases[key].amount;
+            }
+            
+            // Dodatkowo liczy zaznaczone checkboxy (dla przyszłych planowanych wpłat)
+            let totalFromCheckboxes = 0;
+            ['obligacje','uran','cameco','sp500','goldty','ppk','zonasp','zonagold'].forEach(type => {
+                for (let year = 1; year <= 32; year++) {
+                    for (let month = 1; month <= 12; month++) {
+                        const checkbox = document.getElementById(`${type}_y${year}_m${month}`);
+                        if (checkbox && checkbox.checked) {
+                            // Sprawdź czy ten miesiąc NIE ma już prawdziwego zakupu
+                            const purchaseKey = `${type}_y${year}_m${month}`;
+                            if (!purchases[purchaseKey]) {
+                                totalFromCheckboxes += getBaseMonthly(type);
+                            }
+                        }
+                    }
+                }
+            });
+
+            const total = totalFromPurchases + totalFromCheckboxes;
+            document.getElementById('totalInvested').textContent = total.toLocaleString('pl-PL') + ' zł';
+            
+            const targetValue = 1508200;
+            const profit = targetValue - total;
+            document.getElementById('totalProfit').textContent = profit.toLocaleString('pl-PL') + ' zł';
+            const roiValue = total > 0 ? ((profit / total) * 100).toFixed(0) : '∞';
+            document.getElementById('roi').textContent = roiValue + '%';
+        }
+
+        function collectState() {
+            const state = {
+                version: 5,
+                timestamp: Date.now(),
+                activeTab: document.querySelector('.tab.active')?.dataset?.tab || 'obligacje',
+                checkboxes: {}
+            };
+
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                state.checkboxes[cb.id] = cb.checked;
+            });
+
+            return state;
+        }
+
+        function applyState(state) {
+            if (!state) return;
+            if (state.activeTab) activateTab(state.activeTab);
+
+            for (const id in state.checkboxes) {
+                const el = document.getElementById(id);
+                if (el && el.type === 'checkbox') el.checked = !!state.checkboxes[id];
+            }
+
+            updateTotal();
+        }
+
+        function saveState(toast = false) {
+            try {
+                const state = collectState();
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                if (toast) showToast('Zapisano zmiany lokalnie ✅');
+            } catch (e) {
+                console.error('Błąd zapisu stanu:', e);
+                showToast('Błąd zapisu! Sprawdź wolne miejsce w przeglądarce.');
+            }
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch (e) {
+                console.error('Błąd odczytu stanu:', e);
+                return null;
+            }
+        }
+
+        function loadPurchases() {
+            try {
+                const raw = localStorage.getItem(PURCHASES_KEY);
+                if (!raw) return {};
+                return JSON.parse(raw);
+            } catch (e) {
+                console.error('Błąd odczytu zakupów:', e);
+                return {};
+            }
+        }
+
+        function savePurchases() {
+            try {
+                localStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
+            } catch (e) {
+                console.error('Błąd zapisu zakupów:', e);
+            }
+        }
+
+        async function fetchPrice(ticker) {
+            const MARKETSTACK_KEY = '3d323526475b8ef287cfa320cb867d0e';
+            
+            try {
+                // Mapowanie na symbole + ich NATURALNE waluty bazowe
+                const symbolMap = {
+                    'CCJ': { symbol: 'CCJ', baseCurrency: 'USD' },              // Cameco NYSE - USD
+                    'IE000M7V94E1': { symbol: 'NUKL.XETR', baseCurrency: 'EUR' },  // Uran Xetra - EUR
+                    'IE00B5BMR087': { symbol: 'CSPX.XLON', baseCurrency: 'USD' },   // S&P500 ŻONA - waluta FUNDUSZU to USD
+                    'IE00BFMXXD54': { symbol: 'VUAA.XLON', baseCurrency: 'USD' },   // S&P500 TY - waluta FUNDUSZU to USD
+                    'IE00B4NCH459': { symbol: 'IGLN.XLON', baseCurrency: 'USD' }    // Złoto - waluta FUNDUSZU to USD
+                };
+                
+                const tickerInfo = symbolMap[ticker];
+                if (!tickerInfo) {
+                    throw new Error('Unknown ticker: ' + ticker);
+                }
+                
+                // Pobierz cenę z marketstack (w walucie notowania na giełdzie)
+                const url = `http://api.marketstack.com/v1/eod/latest?access_key=${MARKETSTACK_KEY}&symbols=${tickerInfo.symbol}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (!data.data || data.data.length === 0) {
+                    throw new Error('No data from marketstack');
+                }
+                
+                const priceOnExchange = data.data[0].close;
+                
+                // CSPX/VUAA/IGLN są notowane na LSE w GBP, ale FUNDUSZ jest w USD
+                // Więc pobieramy cenę w GBP i konwertujemy na USD (walutę funduszu)
+                
+                if (tickerInfo.baseCurrency === 'USD') {
+                    const usdPlnRes = await fetch('https://api.frankfurter.app/latest?from=USD&to=PLN');
+                    const usdPlnData = await usdPlnRes.json();
+                    const usdToPlnRate = usdPlnData.rates.PLN;
+                    
+                    let priceUsd;
+                    
+                    // Jeśli notowane w GBP (London), konwertuj na USD
+                    if (tickerInfo.symbol.includes('XLON')) {
+                        const gbpUsdRes = await fetch('https://api.frankfurter.app/latest?from=GBP&to=USD');
+                        const gbpUsdData = await gbpUsdRes.json();
+                        const gbpToUsd = gbpUsdData.rates.USD;
+                        priceUsd = priceOnExchange * gbpToUsd;
+                    } else {
+                        priceUsd = priceOnExchange; // Już w USD (np. CCJ)
+                    }
+                    
+                    return {
+                        priceOriginal: priceUsd,
+                        pricePLN: priceUsd * usdToPlnRate,
+                        currency: 'USD',
+                        exchangeRate: usdToPlnRate
+                    };
+                    
+                } else if (tickerInfo.baseCurrency === 'EUR') {
+                    const eurPlnRes = await fetch('https://api.frankfurter.app/latest?from=EUR&to=PLN');
+                    const eurPlnData = await eurPlnRes.json();
+                    const eurToPlnRate = eurPlnData.rates.PLN;
+                    
+                    return {
+                        priceOriginal: priceOnExchange,
+                        pricePLN: priceOnExchange * eurToPlnRate,
+                        currency: 'EUR',
+                        exchangeRate: eurToPlnRate
+                    };
+                }
+                
+            } catch (err) {
+                console.error('Marketstack error for ' + ticker + ':', err);
+                
+                // Fallback prices w NATURALNYCH walutach
+                const fallbacks = {
+                    'CCJ': { price: 92, currency: 'USD' },
+                    'IE000M7V94E1': { price: 54, currency: 'EUR' },
+                    'IE00B5BMR087': { price: 113, currency: 'USD' },
+                    'IE00BFMXXD54': { price: 113, currency: 'USD' },
+                    'IE00B4NCH459': { price: 23, currency: 'USD' }
+                };
+                
+                const fallback = fallbacks[ticker] || { price: 100, currency: 'USD' };
+                
+                if (fallback.currency === 'USD') {
+                    const usdPlnRes = await fetch('https://api.frankfurter.app/latest?from=USD&to=PLN');
+                    const usdPlnData = await usdPlnRes.json();
+                    const rate = usdPlnData.rates.PLN;
+                    
+                    return {
+                        priceOriginal: fallback.price,
+                        pricePLN: fallback.price * rate,
+                        currency: 'USD',
+                        exchangeRate: rate
+                    };
+                } else {
+                    const eurPlnRes = await fetch('https://api.frankfurter.app/latest?from=EUR&to=PLN');
+                    const eurPlnData = await eurPlnRes.json();
+                    const rate = eurPlnData.rates.PLN;
+                    
+                    return {
+                        priceOriginal: fallback.price,
+                        pricePLN: fallback.price * rate,
+                        currency: 'EUR',
+                        exchangeRate: rate
+                    };
+                }
+            }
+        }
+
+        async function saveExtraPurchasePrice(type, year) {
+            const inputId = `${type}_extra_input_y${year}`;
+            const input = document.getElementById(inputId);
+            const amount = parseFloat(input.value);
+            
+            if (!amount || amount <= 0) {
+                alert('Najpierw wpisz kwotę extra wpłaty!');
+                return;
+            }
+
+            const ticker = TICKERS[type];
+            showToast('Pobieram cenę...');
+            
+            try {
+                const priceData = await fetchPrice(ticker);
+                if (!priceData || !priceData.pricePLN) {
+                    alert('Błąd pobierania ceny. Spróbuj ponownie.');
+                    return;
+                }
+
+                const units = amount / priceData.pricePLN;
+                const purchaseKey = `${type}_extra_y${year}_${Date.now()}`;
+                purchases[purchaseKey] = {
+                    date: new Date().toISOString(),
+                    ticker: ticker,
+                    type: type,
+                    amount: amount,
+                    price: priceData.pricePLN,
+                    priceOriginal: priceData.priceOriginal,
+                    currency: priceData.currency,
+                    exchangeRate: priceData.exchangeRate,
+                    units: units,
+                    isExtra: true
+                };
+
+                savePurchases();
+                console.log('Zapisano extra zakup:', purchases[purchaseKey]);
+                showToast(`✅ EXTRA: ${units.toFixed(4)} jedn. po ${priceData.priceOriginal.toFixed(2)} ${priceData.currency} (${priceData.pricePLN.toFixed(2)} zł)`);
+                
+                input.value = '';
+                initializeContent();
+                const saved = loadState();
+                if (saved) applyState(saved);
+            } catch (error) {
+                console.error('Błąd:', error);
+                alert('Wystąpił błąd podczas zapisywania. Sprawdź konsolę.');
+            }
+        }
+
+        async function savePurchasePrice(checkboxId, type, amount) {
+            const checkbox = document.getElementById(checkboxId);
+            if (!checkbox.checked) {
+                alert('Najpierw zaznacz checkbox!');
+                return;
+            }
+
+            const ticker = TICKERS[type];
+            showToast('Pobieram cenę...');
+            
+            try {
+                const priceData = await fetchPrice(ticker);
+                if (!priceData || !priceData.pricePLN) {
+                    alert('Błąd pobierania ceny. Spróbuj ponownie.');
+                    return;
+                }
+
+                const units = amount / priceData.pricePLN;
+                purchases[checkboxId] = {
+                    date: new Date().toISOString(),
+                    ticker: ticker,
+                    type: type,
+                    amount: amount,
+                    price: priceData.pricePLN,
+                    priceOriginal: priceData.priceOriginal,
+                    currency: priceData.currency,
+                    exchangeRate: priceData.exchangeRate,
+                    units: units
+                };
+
+                savePurchases();
+                console.log('Zapisano zakup:', purchases[checkboxId]);
+                showToast(`✅ ${units.toFixed(4)} jedn. po ${priceData.priceOriginal.toFixed(2)} ${priceData.currency} (${priceData.pricePLN.toFixed(2)} zł)`);
+                
+                initializeContent();
+                const saved = loadState();
+                if (saved) applyState(saved);
+            } catch (error) {
+                console.error('Błąd:', error);
+                alert('Wystąpił błąd podczas zapisywania. Sprawdź konsolę.');
+            }
+        }
+
+        async function updateLiveROI() {
+            const content = document.getElementById('liveRoiContent');
+            
+            const grouped = {};
+            let totalInvested = 0;
+            
+            for (const key in purchases) {
+                const p = purchases[key];
+                if (!grouped[p.type]) {
+                    grouped[p.type] = {
+                        ticker: p.ticker,
+                        totalUnits: 0,
+                        totalSpent: 0,
+                        purchases: []
+                    };
+                }
+                grouped[p.type].totalUnits += p.units;
+                grouped[p.type].totalSpent += p.amount;
+                grouped[p.type].purchases.push(p);
+                totalInvested += p.amount;
+            }
+
+            if (Object.keys(grouped).length === 0) {
+                content.innerHTML = `
+                    <div style="text-align:center; padding:40px;">
+                        <p style="color:#999; margin-bottom:20px;">Brak zapisanych zakupów.</p>
+                        <p style="color:#666; font-size:0.9em;">
+                            <strong>Jak zacząć:</strong><br>
+                            1. Przejdź do dowolnej zakładki (np. ETF Uran)<br>
+                            2. Zaznacz checkbox przy miesiącu<br>
+                            3. Kliknij przycisk 💰 aby zapisać cenę zakupu<br>
+                            4. Wróć tutaj i kliknij "🔄 Odśwież ceny rynkowe"
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:20px;">';
+            html += '<strong>💡 Edycja danych Live ROI</strong><br>';
+            html += 'Kliknij na cenę obecną lub jednostki aby edytować. Kursy walut edytujesz poniżej tabeli.';
+            html += '</div>';
+            
+            html += '<table class="live-table"><thead><tr><th>Asset</th><th>Jednostki</th><th>Śr. cena zakupu</th><th>Cena obecna</th><th>ROI (waluta)</th><th>Wartość</th><th>Zysk/Strata</th><th>ROI (PLN)</th></tr></thead><tbody>';
+            
+            let totalValue = 0;
+            
+            showToast('Pobieram aktualne ceny...');
+            
+            // Zapisz kursy do późniejszej edycji
+            const exchangeRates = {};
+            
+            for (const type in grouped) {
+                const g = grouped[type];
+                
+                // Użyj ręcznych jednostek jeśli są dostępne
+                const actualUnits = manualUnits[type] !== undefined ? manualUnits[type] : g.totalUnits;
+                
+                // Pobierz aktualną cenę lub użyj ręcznej
+                let priceData;
+                if (manualPrices[type]) {
+                    // Użyj ręcznej ceny
+                    const manualRate = manualRates[manualPrices[type].currency] || 1;
+                    priceData = {
+                        priceOriginal: manualPrices[type].price,
+                        currency: manualPrices[type].currency,
+                        exchangeRate: manualRate,
+                        pricePLN: manualPrices[type].price * manualRate
+                    };
+                } else {
+                    // Pobierz z API
+                    priceData = await fetchPrice(g.ticker);
+                    
+                    // Nadpisz kursem ręcznym jeśli jest
+                    if (priceData && manualRates[priceData.currency]) {
+                        priceData.exchangeRate = manualRates[priceData.currency];
+                        priceData.pricePLN = priceData.priceOriginal * priceData.exchangeRate;
+                    }
+                }
+                
+                if (priceData) {
+                    // Zapisz kurs walutowy do edycji
+                    if (priceData.currency !== 'PLN') {
+                        exchangeRates[priceData.currency] = priceData.exchangeRate;
+                    }
+                    
+                    // Oblicz średnią cenę zakupu w oryginalnej walucie (nie w PLN!)
+                    let totalWeightedPrice = 0;
+                    let hasOriginalPrices = false;
+                    
+                    for (const p of g.purchases) {
+                        if (p.priceOriginal && p.currency === priceData.currency) {
+                            // Mamy zapisaną cenę oryginalną w tej samej walucie - używamy jej
+                            totalWeightedPrice += p.priceOriginal * p.units;
+                            hasOriginalPrices = true;
+                        } else {
+                            // Stare dane lub brak oryginalnej ceny - używamy price w PLN podzielone przez stary exchangeRate
+                            if (p.exchangeRate) {
+                                const estimatedOriginal = p.price / p.exchangeRate;
+                                totalWeightedPrice += estimatedOriginal * p.units;
+                            } else {
+                                // Zupełnie stare dane - używamy price jako fallback
+                                totalWeightedPrice += p.price * p.units;
+                            }
+                        }
+                    }
+                    
+                    const avgPriceOriginal = totalWeightedPrice / g.totalUnits;
+                    
+                    // ROI w walucie oryginalnej (bez wpływu kursu)
+                    const roiCurrency = hasOriginalPrices && priceData.currency !== 'PLN'
+                        ? ((priceData.priceOriginal - avgPriceOriginal) / avgPriceOriginal) * 100
+                        : null;
+                    
+                    // Aktualna wartość w PLN - używamy actualUnits!
+                    const currentValue = actualUnits * priceData.pricePLN;
+                    
+                    // Zysk/strata w PLN (wartość obecna vs suma wpłat)
+                    const profit = currentValue - g.totalSpent;
+                    const roiPLN = (profit / g.totalSpent) * 100;
+                    
+                    totalValue += currentValue;
+                    
+                    const profitClass = profit >= 0 ? 'positive' : 'negative';
+                    const currencyROIClass = roiCurrency !== null ? (roiCurrency >= 0 ? 'positive' : 'negative') : '';
+                    
+                    // Wyświetl średnią cenę w oryginalnej walucie (jeśli dostępna)
+                    const avgDisplay = hasOriginalPrices && priceData.currency !== 'PLN'
+                        ? `${avgPriceOriginal.toFixed(2)} ${priceData.currency}`
+                        : `${(g.totalSpent / g.totalUnits).toFixed(2)} zł`;
+                    
+                    const roiCurrencyDisplay = roiCurrency !== null
+                        ? `<span class="${currencyROIClass}">${roiCurrency >= 0 ? '+' : ''}${roiCurrency.toFixed(2)}%</span><br><small>(sam instrument)</small>`
+                        : '-';
+                    
+                    html += `
+                        <tr>
+                            <td><strong>${type.toUpperCase()}</strong><br><small>${g.ticker}</small></td>
+                            <td contenteditable="true" id="liveunits_${type}" style="background:#e3f2fd; padding:8px; border:2px solid #2196f3; cursor:text;" 
+                                onblur="updateLiveUnits('${type}', this.textContent)">${actualUnits.toFixed(4)}</td>
+                            <td>${avgDisplay}</td>
+                            <td contenteditable="true" id="liveprice_${type}" style="background:#fffacd; padding:8px; border:2px solid #ffc107; cursor:text;" 
+                                onblur="updateLivePrice('${type}', this.textContent, '${priceData.currency}')" 
+                                data-currency="${priceData.currency}" 
+                                data-rate="${priceData.exchangeRate}">${priceData.priceOriginal.toFixed(2)} ${priceData.currency}<br><small>(${priceData.pricePLN.toFixed(2)} zł)</small></td>
+                            <td>${roiCurrencyDisplay}</td>
+                            <td>${currentValue.toFixed(2)} zł</td>
+                            <td class="${profitClass}">${profit >= 0 ? '+' : ''}${profit.toFixed(2)} zł</td>
+                            <td class="${profitClass}">${roiPLN >= 0 ? '+' : ''}${roiPLN.toFixed(2)}%<br><small>(z kursem)</small></td>
+                        </tr>
+                    `;
+                }
+            }
+            
+            const totalProfit = totalValue - totalInvested;
+            const totalROI = (totalProfit / totalInvested) * 100;
+            const totalProfitClass = totalProfit >= 0 ? 'positive' : 'negative';
+            
+            html += `
+                <tr style="background:#f0f0f0; font-weight:bold;">
+                    <td>RAZEM</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>${totalValue.toFixed(2)} zł</td>
+                    <td class="${totalProfitClass}">${totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)} zł</td>
+                    <td class="${totalProfitClass}">${totalProfit >= 0 ? '+' : ''}${totalROI.toFixed(2)}%</td>
+                </tr>
+            `;
+            
+            html += '</tbody></table>';
+            
+            // Dodaj sekcję edycji kursów walutowych
+            if (Object.keys(exchangeRates).length > 0) {
+                html += '<div style="background:#e8f5e9; padding:20px; border-radius:10px; margin-top:20px;">';
+                html += '<h3 style="color:#2e7d32; margin-bottom:15px;">💱 Kursy walut (kliknij aby edytować)</h3>';
+                
+                for (const currency in exchangeRates) {
+                    const rate = exchangeRates[currency];
+                    html += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:white; border-radius:8px; margin-bottom:10px;">
+                            <strong>${currency}/PLN:</strong>
+                            <span contenteditable="true" id="rate_${currency}" style="background:#fffacd; padding:8px 15px; border:2px solid #ffc107; border-radius:6px; min-width:100px; text-align:center; cursor:text;" 
+                                onblur="updateExchangeRate('${currency}', this.textContent)">${rate.toFixed(4)}</span>
+                        </div>
+                    `;
+                }
+                
+                html += '<p style="color:#666; font-size:0.9em; margin-top:10px;">Po zmianie kursu kliknij ponownie "🔄 Odśwież ceny rynkowe" aby przeliczyć wartości.</p>';
+                html += '</div>';
+            }
+            
+            html += `
+                <div class="calc-row total-family" style="margin-top:20px;">
+                    <span>💰 Suma wpłat:</span>
+                    <span>${totalInvested.toFixed(2)} zł</span>
+                </div>
+                <div class="calc-row total-family">
+                    <span>📈 Wartość portfela:</span>
+                    <span>${totalValue.toFixed(2)} zł</span>
+                </div>
+                <div class="calc-row total-family ${totalProfitClass}">
+                    <span>🎯 Zysk/Strata:</span>
+                    <span>${totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)} zł (${totalProfit >= 0 ? '+' : ''}${totalROI.toFixed(2)}%)</span>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+            showToast('Ceny zaktualizowane! ✅');
+        }
+
+        function clearState() {
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+
+        function activateTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === tabName));
+        }
+
+        function onTabClick(e) {
+            const tab = e.currentTarget.dataset.tab;
+            activateTab(tab);
+            saveState();
+        }
+
+        function onFieldChange() {
+            updateTotal();
+            saveState();
+        }
+
+        let toastTimer = null;
+        function showToast(msg) {
+            let t = document.getElementById('simpleToast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'simpleToast';
+                t.style.position = 'fixed';
+                t.style.right = '18px';
+                t.style.bottom = '18px';
+                t.style.background = 'rgba(0,0,0,0.8)';
+                t.style.color = '#fff';
+                t.style.padding = '10px 14px';
+                t.style.borderRadius = '8px';
+                t.style.zIndex = '9999';
+                document.body.appendChild(t);
+            }
+            t.textContent = msg;
+            t.style.opacity = '1';
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(()=> t.style.opacity = '0', 2000);
+        }
+
+        function exportPurchaseData() {
+            if (Object.keys(purchases).length === 0) {
+                alert('Brak danych do eksportu!');
+                return;
+            }
+
+            // Grupuj po typie
+            const grouped = {};
+            for (const key in purchases) {
+                const p = purchases[key];
+                
+                if (!grouped[p.type]) {
+                    grouped[p.type] = {
+                        items: [],
+                        totalUnits: 0,
+                        totalAmount: 0,
+                        weightedPriceOriginal: 0,
+                        ticker: p.ticker,
+                        currency: p.currency || '?'
+                    };
+                }
+                
+                grouped[p.type].items.push(p);
+                grouped[p.type].totalUnits += p.units;
+                grouped[p.type].totalAmount += p.amount;
+                if (p.priceOriginal) {
+                    grouped[p.type].weightedPriceOriginal += p.priceOriginal * p.units;
+                }
+            }
+
+            // Twórz raport tekstowy
+            let report = '='.repeat(80) + '\n';
+            report += 'RAPORT ZAKUPÓW - eMERYTURA\n';
+            report += '='.repeat(80) + '\n\n';
+
+            for (const type in grouped) {
+                const g = grouped[type];
+                const avgPriceOriginal = g.weightedPriceOriginal / g.totalUnits;
+                const avgPricePLN = g.totalAmount / g.totalUnits;
+
+                report += `\n${'='.repeat(80)}\n`;
+                report += `${type.toUpperCase()} (${g.ticker})\n`;
+                report += `${'='.repeat(80)}\n\n`;
+
+                report += `Podsumowanie:\n`;
+                report += `  Łącznie jednostek: ${g.totalUnits.toFixed(6)}\n`;
+                report += `  Łącznie wpłacono: ${g.totalAmount.toFixed(2)} PLN\n`;
+                report += `  Średnia cena (PLN): ${avgPricePLN.toFixed(2)} PLN/jedn\n`;
+                if (avgPriceOriginal > 0) {
+                    report += `  ⭐ Średnia cena (${g.currency}): ${avgPriceOriginal.toFixed(2)} ${g.currency}/jedn\n`;
+                }
+                report += `\n`;
+
+                report += `Szczegóły zakupów:\n`;
+                report += `${'─'.repeat(80)}\n`;
+                report += `Data            | Kwota PLN | Cena orig. | Waluta | Kurs    | Jednostki\n`;
+                report += `${'─'.repeat(80)}\n`;
+
+                for (const item of g.items) {
+                    const dateStr = new Date(item.date).toLocaleDateString('pl-PL');
+                    const priceOrig = item.priceOriginal ? item.priceOriginal.toFixed(2) : 'BRAK';
+                    const curr = item.currency || '?';
+                    const rate = item.exchangeRate ? item.exchangeRate.toFixed(4) : 'BRAK';
+                    
+                    report += `${dateStr.padEnd(15)} | ${item.amount.toFixed(2).padStart(9)} | ${priceOrig.padStart(10)} | ${curr.padEnd(6)} | ${rate.padStart(7)} | ${item.units.toFixed(6)}\n`;
+                }
+                report += `${'─'.repeat(80)}\n`;
+            }
+
+            // Wyświetl w console + skopiuj do schowka
+            console.log(report);
+            
+            // Stwórz popup z raportem
+            const popup = window.open('', 'Export', 'width=900,height=600');
+            popup.document.write(`
+                <html>
+                <head>
+                    <title>Export danych zakupów</title>
+                    <style>
+                        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+                        pre { background: white; padding: 20px; border-radius: 8px; overflow: auto; }
+                        button { padding: 10px 20px; background: #667eea; color: white; border: none; 
+                                border-radius: 4px; cursor: pointer; margin: 10px 5px; font-size: 14px; }
+                        button:hover { background: #5568d3; }
+                    </style>
+                </head>
+                <body>
+                    <h2>📊 Eksport danych zakupów</h2>
+                    <button onclick="navigator.clipboard.writeText(document.getElementById('report').textContent).then(() => alert('Skopiowano do schowka!'))">
+                        📋 Skopiuj do schowka
+                    </button>
+                    <button onclick="window.print()">🖨️ Drukuj</button>
+                    <pre id="report">${report}</pre>
+                </body>
+                </html>
+            `);
+            
+            showToast('Raport wygenerowany! ✅');
+        }
+        
+        // NOWA FUNKCJA - Eksport zakupów do JSON
+        function exportPurchasesJSON() {
+            if (Object.keys(purchases).length === 0) {
+                alert('Brak danych do eksportu!');
+                return;
+            }
+            
+            const data = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                appName: 'eMERYTURA',
+                purchases: purchases
+            };
+            
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `eMERYTURA_zakupy_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📤 Dane zakupów wyeksportowane do JSON!');
+        }
+        
+        // NOWA FUNKCJA - Import zakupów z JSON
+        function importPurchasesJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // Walidacja struktury danych
+                    if (!data.purchases || typeof data.purchases !== 'object') {
+                        alert('❌ Nieprawidłowy format pliku! Brak poprawnych danych zakupów.');
+                        return;
+                    }
+                    
+                    const importedCount = Object.keys(data.purchases).length;
+                    const currentCount = Object.keys(purchases).length;
+                    
+                    // Pytanie o strategię importu
+                    let strategy = 'replace';
+                    if (currentCount > 0) {
+                        const userChoice = confirm(
+                            `📊 Znaleziono ${importedCount} zakupów w pliku.\n` +
+                            `Obecnie masz ${currentCount} zakupów w aplikacji.\n\n` +
+                            `❓ Jak chcesz zaimportować dane?\n\n` +
+                            `✅ OK = NADPISZ wszystkie obecne dane\n` +
+                            `❌ Anuluj = POŁĄCZ z obecnymi danymi (bez duplikatów)`
+                        );
+                        strategy = userChoice ? 'replace' : 'merge';
+                    }
+                    
+                    if (strategy === 'replace') {
+                        // Nadpisz wszystkie dane
+                        purchases = data.purchases;
+                        savePurchases();
+                        showToast(`✅ Zaimportowano ${importedCount} zakupów (NADPISANIE)`);
+                    } else {
+                        // Połącz dane
+                        let merged = 0;
+                        let duplicates = 0;
+                        
+                        for (const [key, value] of Object.entries(data.purchases)) {
+                            if (!purchases[key]) {
+                                purchases[key] = value;
+                                merged++;
+                            } else {
+                                duplicates++;
+                            }
+                        }
+                        
+                        savePurchases();
+                        alert(
+                            `✅ Połączono dane:\n\n` +
+                            `➕ Dodano: ${merged} nowych zakupów\n` +
+                            `⚠️ Pominięto: ${duplicates} duplikatów`
+                        );
+                    }
+                    
+                    // Odśwież interfejs
+                    updateTotal();
+                    updateLiveROI();
+                    
+                    // Pokaż info o źródle
+                    if (data.exportDate) {
+                        console.log(`📅 Dane wyeksportowane: ${new Date(data.exportDate).toLocaleString('pl-PL')}`);
+                    }
+                    
+                } catch (error) {
+                    alert(`❌ Błąd podczas importu danych!\n\nSzczegóły: ${error.message}`);
+                    console.error('Import error:', error);
+                }
+                
+                // Wyczyść input file aby można było importować ten sam plik ponownie
+                event.target.value = '';
+            };
+            
+            reader.onerror = function() {
+                alert('❌ Błąd podczas odczytu pliku!');
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function showPurchaseEditor() {
+            const content = document.getElementById('liveRoiContent');
+            
+            if (Object.keys(purchases).length === 0) {
+                alert('Brak zakupów do edycji!');
+                return;
+            }
+            
+            let html = '<div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:20px;">';
+            html += '<strong>⚠️ Edycja zakupów</strong><br>';
+            html += 'Możesz edytować: cenę zakupu, kurs waluty, oraz ilość jednostek. Kliknij na żółte/niebieskie pole aby zmienić wartość.';
+            html += '</div>';
+            
+            html += '<table class="live-table"><thead><tr><th>Typ</th><th>Data</th><th>Kwota PLN</th><th>Cena zakupu</th><th>Waluta</th><th>Kurs do PLN</th><th>Jednostki</th><th>Akcje</th></tr></thead><tbody>';
+            
+            for (const key in purchases) {
+                const p = purchases[key];
+                const dateStr = new Date(p.date).toLocaleDateString('pl-PL');
+                const exchangeRate = p.exchangeRate || 1;
+                const currency = p.currency || 'PLN';
+                
+                html += `
+                    <tr style="cursor:pointer;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='white'">
+                        <td><strong>${p.type.toUpperCase()}</strong></td>
+                        <td>${dateStr}</td>
+                        <td>${p.amount.toFixed(2)} zł</td>
+                        <td contenteditable="true" id="price_${key}" style="background:#fffacd; padding:8px; border:2px solid #ffc107;" 
+                            onblur="updatePurchasePrice('${key}', this.textContent)">${p.priceOriginal ? p.priceOriginal.toFixed(2) : p.price.toFixed(2)}</td>
+                        <td>${currency}</td>
+                        <td contenteditable="true" id="rate_${key}" style="background:#e1f5fe; padding:8px; border:2px solid #03a9f4;" 
+                            onblur="updatePurchaseRate('${key}', this.textContent)">${exchangeRate.toFixed(4)}</td>
+                        <td contenteditable="true" id="units_${key}" style="background:#e3f2fd; padding:8px; border:2px solid #2196f3;" 
+                            onblur="updatePurchaseUnits('${key}', this.textContent)">${p.units.toFixed(6)}</td>
+                        <td><button onclick="deletePurchase('${key}')" style="background:#e53935; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">🗑️</button></td>
+                    </tr>
+                `;
+            }
+            
+            html += '</tbody></table>';
+            html += '<div style="margin-top:20px;"><button onclick="location.reload()" class="btn save">✅ Zapisz zmiany i odśwież</button></div>';
+            
+            content.innerHTML = html;
+        }
+        
+        function updatePurchasePrice(key, newPriceStr) {
+            const newPrice = parseFloat(newPriceStr);
+            if (isNaN(newPrice) || newPrice <= 0) {
+                alert('Nieprawidłowa cena!');
+                return;
+            }
+            
+            const p = purchases[key];
+            const oldPrice = p.priceOriginal || p.price;
+            
+            // Aktualizuj cenę i przelicz jednostki
+            if (p.priceOriginal !== undefined) {
+                p.priceOriginal = newPrice;
+            }
+            p.price = newPrice * (p.exchangeRate || 1);
+            p.units = p.amount / p.price;
+            
+            savePurchases();
+            showToast(`Zaktualizowano: ${oldPrice.toFixed(2)} → ${newPrice.toFixed(2)}`);
+        }
+        
+        function updatePurchaseUnits(key, newUnitsStr) {
+            const newUnits = parseFloat(newUnitsStr);
+            if (isNaN(newUnits) || newUnits <= 0) {
+                alert('Nieprawidłowa ilość jednostek!');
+                return;
+            }
+            
+            const p = purchases[key];
+            const oldUnits = p.units;
+            
+            // Aktualizuj jednostki
+            p.units = newUnits;
+            
+            savePurchases();
+            showToast(`Jednostki zaktualizowane: ${oldUnits.toFixed(6)} → ${newUnits.toFixed(6)}`);
+        }
+        
+        function updatePurchaseRate(key, newRateStr) {
+            const newRate = parseFloat(newRateStr.replace(/[^\d.,]/g, '').replace(',', '.'));
+            if (isNaN(newRate) || newRate <= 0) {
+                alert('Nieprawidłowy kurs!');
+                return;
+            }
+            
+            const p = purchases[key];
+            const oldRate = p.exchangeRate || 1;
+            
+            // Aktualizuj kurs i przelicz cenę w PLN
+            p.exchangeRate = newRate;
+            if (p.priceOriginal) {
+                p.price = p.priceOriginal * newRate;
+            }
+            
+            savePurchases();
+            showToast(`Kurs zaktualizowany: ${oldRate.toFixed(4)} → ${newRate.toFixed(4)}`);
+        }
+        
+        // Funkcje do edycji Live ROI
+        let manualPrices = JSON.parse(localStorage.getItem('manualPrices') || '{}');
+        let manualUnits = JSON.parse(localStorage.getItem('manualUnits') || '{}');
+        let manualRates = JSON.parse(localStorage.getItem('manualRates') || '{}');
+        
+        function updateLivePrice(type, newPriceStr, currency) {
+            const newPrice = parseFloat(newPriceStr.replace(/[^\d.,]/g, '').replace(',', '.'));
+            if (isNaN(newPrice) || newPrice <= 0) {
+                alert('Nieprawidłowa cena!');
+                return;
+            }
+            
+            manualPrices[type] = { price: newPrice, currency: currency };
+            localStorage.setItem('manualPrices', JSON.stringify(manualPrices));
+            showToast(`Cena ${type} zaktualizowana: ${newPrice.toFixed(2)} ${currency}`);
+        }
+        
+        function updateLiveUnits(type, newUnitsStr) {
+            const newUnits = parseFloat(newUnitsStr.replace(/[^\d.,]/g, '').replace(',', '.'));
+            if (isNaN(newUnits) || newUnits <= 0) {
+                alert('Nieprawidłowa ilość jednostek!');
+                return;
+            }
+            
+            manualUnits[type] = newUnits;
+            localStorage.setItem('manualUnits', JSON.stringify(manualUnits));
+            showToast(`Jednostki ${type} zaktualizowane: ${newUnits.toFixed(4)}`);
+        }
+        
+        function updateExchangeRate(currency, newRateStr) {
+            const newRate = parseFloat(newRateStr.replace(/[^\d.,]/g, '').replace(',', '.'));
+            if (isNaN(newRate) || newRate <= 0) {
+                alert('Nieprawidłowy kurs!');
+                return;
+            }
+            
+            manualRates[currency] = newRate;
+            localStorage.setItem('manualRates', JSON.stringify(manualRates));
+            showToast(`Kurs ${currency}/PLN zaktualizowany: ${newRate.toFixed(4)}`);
+        }
+        
+        function deletePurchase(key) {
+            if (confirm('Usunąć ten zakup?')) {
+                delete purchases[key];
+                savePurchases();
+                showPurchaseEditor();
+                showToast('Zakup usunięty');
+            }
+        }
+
+        // Wczytaj purchases z localStorage LUB użyj preloaded
+        const loadedPurchases = loadPurchases();
+        if (Object.keys(loadedPurchases).length > 0) {
+            // Jeśli są zapisane dane w localStorage, użyj ich
+            purchases = loadedPurchases;
+        } else {
+            // Jeśli to pierwsze uruchomienie, zapisz preloaded purchases do localStorage
+            savePurchases();
+            console.log('✅ Załadowano ' + Object.keys(purchases).length + ' zakupów z XTB');
+        }
+        
+        initializeContent();
+        document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', onTabClick));
+        document.getElementById('saveBtn').addEventListener('click', ()=> saveState(true));
+        document.getElementById('exportBtn').addEventListener('click', exportPurchasesJSON);
+        document.getElementById('importBtn').addEventListener('click', () => {
+            document.getElementById('importFile').click();
+        });
+        document.getElementById('importFile').addEventListener('change', importPurchasesJSON);
+        document.getElementById('editPurchases').addEventListener('click', showPurchaseEditor);
+        document.getElementById('exportReport').addEventListener('click', exportPurchaseData);
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            if (confirm('Na pewno chcesz usunąć wszystkie zapisane dane lokalne?')) clearState();
+        });
+        document.getElementById('refreshPrices').addEventListener('click', updateLiveROI);
+
+        const saved = loadState();
+        if (saved) {
+            applyState(saved);
+            showToast('Wczytano zapisane dane ✅');
+        } else {
+            updateTotal();
+        }
+    </script>
+</body>
+</html>

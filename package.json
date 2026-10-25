@@ -1,0 +1,26 @@
+{
+  "name": "emerytura",
+  "productName": "eMERYTURA",
+  "version": "1.0.0",
+  "description": "eMERYTURA – tracker inwestycji (PanRodla)",
+  "author": "PanRodla",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable nsis --publish never"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "pl.panrodla.emerytura",
+    "productName": "eMERYTURA",
+    "copyright": "© PanRodla. Wszelkie prawa zastrzeżone.",
+    "files": ["main.js", "app/**/*"],
+    "directories": { "output": "dist" },
+    "win": { "artifactName": "eMERYTURA-${version}-${arch}.${ext}" },
+    "portable": { "artifactName": "eMERYTURA-portable.exe" },
+    "nsis": { "artifactName": "eMERYTURA-instalator.exe", "oneClick": false, "allowToChangeInstallationDirectory": true }
+  }
+}
