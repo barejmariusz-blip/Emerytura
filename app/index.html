@@ -874,7 +874,38 @@
             }
         }
 
+        // ===== Ceny na żywo (wersja EXE): Yahoo Finance przez proces główny =====
+        const LIVE_SYMBOLS = {
+            'CCJ': { symbol: 'CCJ', baseCurrency: 'USD' },
+            'IE000M7V94E1': { symbol: 'NUKL.DE', baseCurrency: 'EUR' },
+            'IE00B5BMR087': { symbol: 'CSPX.L', baseCurrency: 'USD' },
+            'IE00BFMXXD54': { symbol: 'VUAA.L', baseCurrency: 'USD' },
+            'IE00B4NCH459': { symbol: 'IGLN.L', baseCurrency: 'USD' }
+        };
+        const fxCache = {};
+        async function liveFx(from, to) {
+            if (from === to) return 1;
+            const k = from + to, c = fxCache[k];
+            if (c && Date.now() - c.t < 30000) return c.v;
+            const q = await window.quotes.get(k + '=X');
+            fxCache[k] = { v: q.price, t: Date.now() };
+            return q.price;
+        }
+        async function fetchLivePrice(ticker) {
+            const info = LIVE_SYMBOLS[ticker];
+            if (!info || !window.quotes) return null;
+            const q = await window.quotes.get(info.symbol);
+            let price = q.price, cur = q.currency;
+            if (cur === 'GBp' || cur === 'GBX') { price /= 100; cur = 'GBP'; }
+            if (cur !== info.baseCurrency) price *= await liveFx(cur, info.baseCurrency);
+            const rate = await liveFx(info.baseCurrency, 'PLN');
+            return { priceOriginal: price, pricePLN: price * rate, currency: info.baseCurrency, exchangeRate: rate,
+                     live: true, time: q.time, changePct: q.prevClose ? (q.price / q.prevClose - 1) * 100 : null };
+        }
+
         async function fetchPrice(ticker) {
+            try { const live = await fetchLivePrice(ticker); if (live) return live; }
+            catch (e) { console.error('Live price error for ' + ticker + ':', e); }
             const MARKETSTACK_KEY = '3d323526475b8ef287cfa320cb867d0e';
             
             try {
@@ -963,6 +994,7 @@
                     const rate = usdPlnData.rates.PLN;
                     
                     return {
+                        fake: true,
                         priceOriginal: fallback.price,
                         pricePLN: fallback.price * rate,
                         currency: 'USD',
@@ -974,6 +1006,7 @@
                     const rate = eurPlnData.rates.PLN;
                     
                     return {
+                        fake: true,
                         priceOriginal: fallback.price,
                         pricePLN: fallback.price * rate,
                         currency: 'EUR',
@@ -1075,8 +1108,14 @@
             }
         }
 
-        async function updateLiveROI() {
+        let liveBusy = false;
+        async function updateLiveROI(ev, silent) {
+            if (liveBusy) return; liveBusy = true;
+            try { await updateLiveROIInner(silent === true); } finally { liveBusy = false; }
+        }
+        async function updateLiveROIInner(silent) {
             const content = document.getElementById('liveRoiContent');
+            let lastQuoteTime = 0, anyFake = false, anyManual = false;
             
             const grouped = {};
             let totalInvested = 0;
@@ -1122,7 +1161,7 @@
             
             let totalValue = 0;
             
-            showToast('Pobieram aktualne ceny...');
+            if (!silent) showToast('Pobieram aktualne ceny...');
             
             // Zapisz kursy do późniejszej edycji
             const exchangeRates = {};
@@ -1136,6 +1175,7 @@
                 // Pobierz aktualną cenę lub użyj ręcznej
                 let priceData;
                 if (manualPrices[type]) {
+                    anyManual = true;
                     // Użyj ręcznej ceny
                     const manualRate = manualRates[manualPrices[type].currency] || 1;
                     priceData = {
@@ -1156,6 +1196,8 @@
                 }
                 
                 if (priceData) {
+                    if (priceData.fake) anyFake = true;
+                    if (priceData.time) lastQuoteTime = Math.max(lastQuoteTime, priceData.time);
                     // Zapisz kurs walutowy do edycji
                     if (priceData.currency !== 'PLN') {
                         exchangeRates[priceData.currency] = priceData.exchangeRate;
@@ -1219,7 +1261,7 @@
                             <td contenteditable="true" id="liveprice_${type}" style="background:#fffacd; padding:8px; border:2px solid #ffc107; cursor:text;" 
                                 onblur="updateLivePrice('${type}', this.textContent, '${priceData.currency}')" 
                                 data-currency="${priceData.currency}" 
-                                data-rate="${priceData.exchangeRate}">${priceData.priceOriginal.toFixed(2)} ${priceData.currency}<br><small>(${priceData.pricePLN.toFixed(2)} zł)</small></td>
+                                data-rate="${priceData.exchangeRate}">${priceData.priceOriginal.toFixed(2)} ${priceData.currency}${priceData.changePct != null ? ` <small class="${priceData.changePct >= 0 ? 'positive' : 'negative'}">${priceData.changePct >= 0 ? '▲ +' : '▼ '}${priceData.changePct.toFixed(2)}%</small>` : ''}${priceData.fake ? ' <small class="negative">⚠ cena zastępcza</small>' : ''}<br><small>(${priceData.pricePLN.toFixed(2)} zł)</small></td>
                             <td>${roiCurrencyDisplay}</td>
                             <td>${currentValue.toFixed(2)} zł</td>
                             <td class="${profitClass}">${profit >= 0 ? '+' : ''}${profit.toFixed(2)} zł</td>
@@ -1247,6 +1289,7 @@
             `;
             
             html += '</tbody></table>';
+            html += `<p style="margin-top:8px; font-size:0.85em; color:#666;">${lastQuoteTime ? `🟢 Ceny na żywo · ostatnie notowanie ${new Date(lastQuoteTime).toLocaleString('pl-PL', {dateStyle:'short', timeStyle:'short'})} · odświeżanie co 60 s (Yahoo Finance, giełdy europejskie do ~15 min opóźnienia)` : 'Ceny z końca dnia (marketstack)'}${anyManual ? ' · <strong>część cen wpisana ręcznie</strong> – <a href="#" onclick="clearManualPrices();return false;">wróć do cen automatycznych</a>' : ''}${anyFake ? ' · <strong class="negative">⚠ nie udało się pobrać części cen, pokazane są ceny zastępcze, nie rynkowe</strong>' : ''}</p>`;
             
             // Dodaj sekcję edycji kursów walutowych
             if (Object.keys(exchangeRates).length > 0) {
@@ -1300,6 +1343,7 @@
         function onTabClick(e) {
             const tab = e.currentTarget.dataset.tab;
             activateTab(tab);
+            if (tab === 'liveroi' && window.quotes) updateLiveROI(null, true);
             saveState();
         }
 
@@ -1684,6 +1728,21 @@
             showToast(`Kurs ${currency}/PLN zaktualizowany: ${newRate.toFixed(4)}`);
         }
         
+        function clearManualPrices() {
+            manualPrices = {}; manualRates = {};
+            localStorage.setItem('manualPrices', '{}'); localStorage.setItem('manualRates', '{}');
+            showToast('Ceny i kursy znowu automatyczne');
+            updateLiveROI();
+        }
+
+        // automatyczne odświeżanie, gdy zakładka Live ROI jest otwarta (i nic nie jest edytowane)
+        if (window.quotes) setInterval(() => {
+            const box = document.getElementById('liveRoiContent');
+            if (!box || box.offsetParent === null || !box.querySelector('table')) return;
+            if (document.activeElement && box.contains(document.activeElement)) return;
+            updateLiveROI(null, true);
+        }, 60000);
+
         function deletePurchase(key) {
             if (confirm('Usunąć ten zakup?')) {
                 delete purchases[key];

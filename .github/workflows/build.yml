@@ -13,6 +13,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Check live quote feed
+        continue-on-error: true
+        shell: bash
+        run: |
+          for s in CSPX.L VUAA.L IGLN.L NUKL.DE CCJ USDPLN=X EURPLN=X; do
+            curl -s -m 15 -A "Mozilla/5.0" "https://query1.finance.yahoo.com/v8/finance/chart/$s?interval=1m&range=1d" \
+              | python -c "import sys,json;m=json.load(sys.stdin)['chart']['result'][0]['meta'];print('$s',m['currency'],m['regularMarketPrice'],m.get('chartPreviousClose'))" || echo "$s FAILED"
+          done
       - run: npm install
       - run: npm run dist
       - uses: softprops/action-gh-release@v2

@@ -1,7 +1,7 @@
 {
   "name": "emerytura",
   "productName": "eMERYTURA",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "eMERYTURA – tracker inwestycji (PanRodla)",
   "author": "PanRodla",
   "main": "main.js",
@@ -17,7 +17,7 @@
     "appId": "pl.panrodla.emerytura",
     "productName": "eMERYTURA",
     "copyright": "© PanRodla. Wszelkie prawa zastrzeżone.",
-    "files": ["main.js", "app/**/*"],
+    "files": ["main.js", "preload.js", "app/**/*"],
     "directories": { "output": "dist" },
     "win": { "artifactName": "eMERYTURA-${version}-${arch}.${ext}" },
     "portable": { "artifactName": "eMERYTURA-portable.exe" },
