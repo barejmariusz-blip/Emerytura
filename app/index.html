@@ -3,92 +3,108 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Tracker Inwestycji - Plan Rodzinny</title>
+    <title>eMERYTURA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        /* eMERYTURA – "nocny wyciąg z banku": atrament, mosiądz, cyfry tabelaryczne */
+        :root {
+            --ink:#0f1a2b; --panel:#16233a; --panel2:#1c2c47; --panel3:#233658; --line:#2b3f62;
+            --fg:#e9eef7; --muted:#97a6c1; --brass:#d9a441; --brass-soft:rgba(217,164,65,.14);
+            --pos:#3fbf8a; --neg:#ec6a61; --blue:#5aa2e8; --violet:#a98be8; --amber:#e8923a;
+            --info-bg:rgba(90,162,232,.10); --warn-bg:rgba(217,164,65,.10); --ok-bg:rgba(63,191,138,.09);
+            --edit-bg:rgba(217,164,65,.16);
+            --serif:'Fraunces', Georgia, 'Times New Roman', serif;
+            --sans:'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+        }
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height:100vh; padding:20px; }
-        .container { max-width:1400px; margin:0 auto; background:white; border-radius:20px; padding:30px; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
-        h1 { text-align:center; color:#333; margin-bottom:10px; font-size:2.5em; }
-        .subtitle { text-align:center; color:#666; margin-bottom:30px; font-size:1.1em; }
-        .summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; margin-bottom:20px; }
-        .summary-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; padding:25px; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.2); }
-        .summary-card h3 { font-size:0.9em; opacity:0.9; margin-bottom:10px; }
-        .summary-card .value { font-size:2em; font-weight:bold; }
+        html { color-scheme:dark; }
+        body { font-family:var(--sans); font-size:15px; line-height:1.5; color:var(--fg); background:var(--ink);
+               background-image:radial-gradient(1200px 500px at 85% -10%, rgba(217,164,65,.10), transparent 60%);
+               min-height:100vh; padding:28px 24px 48px; font-variant-numeric:tabular-nums; }
+        .container { max-width:1320px; margin:0 auto; }
+        h1 { font-family:var(--serif); font-weight:600; font-size:clamp(2.2em,4vw,3.2em); letter-spacing:-.02em; line-height:1.05; color:var(--fg); margin-bottom:6px; }
+        h2 { font-family:var(--serif); font-weight:600; font-size:1.6em; letter-spacing:-.01em; margin:4px 0 6px; color:var(--fg); }
+        h3 { font-weight:600; }
+        .subtitle { color:var(--muted); margin-bottom:22px; font-size:1em; }
+        a { color:var(--brass); }
 
-        .tabs { display:flex; gap:10px; margin-bottom:20px; border-bottom:2px solid #eee; flex-wrap:wrap; }
-        .tab { padding:15px 20px; background:none; border:none; cursor:pointer; font-size:1.05em; color:#666; border-bottom:3px solid transparent; transition:all .2s; border-radius:8px 8px 0 0; }
-        .tab.active { color:#667eea; border-bottom-color:#667eea; font-weight:bold; background: #fff; }
-        .tab:hover { color:#667eea; }
+        .summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1px; margin:22px 0 18px;
+                   background:var(--line); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+        .summary-card { background:var(--panel); padding:18px 20px 20px; }
+        .summary-card:first-child { box-shadow:inset 0 3px 0 var(--brass); }
+        .summary-card h3 { font-size:.85em; font-weight:500; color:var(--muted); margin-bottom:6px; }
+        .summary-card .value { font-family:var(--serif); font-size:2.1em; font-weight:600; letter-spacing:-.01em; color:var(--fg); }
+        .summary-card:first-child .value { color:var(--brass); }
+
+        .tabs { display:flex; gap:4px; margin:6px 0 22px; padding:5px; background:var(--panel); border:1px solid var(--line); border-radius:12px; flex-wrap:wrap; }
+        .tab { padding:9px 14px; background:none; border:none; cursor:pointer; font:inherit; font-size:.95em; color:var(--muted); border-radius:8px; transition:background .15s,color .15s; }
+        .tab:hover { color:var(--fg); background:var(--panel2); }
+        .tab.active { color:var(--ink); background:var(--brass); font-weight:600; }
+        .tab:focus-visible, .btn:focus-visible, button:focus-visible { outline:2px solid var(--brass); outline-offset:2px; }
 
         .tab-content { display:none; }
         .tab-content.active { display:block; }
 
-        .year-section { margin-bottom:20px; border:2px solid #eee; border-radius:15px; padding:15px; background:#fafafa; }
-        .year-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:10px; border-bottom:2px solid #ddd; }
-        .year-title { font-size:1.1em; font-weight:bold; color:#333; }
-        .year-total { font-size:1em; color:#667eea; font-weight:bold; }
+        .year-section { margin-bottom:12px; border:1px solid var(--line); border-radius:12px; padding:14px 16px; background:var(--panel); }
+        .year-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--line); }
+        .year-title { font-family:var(--serif); font-size:1.15em; font-weight:600; color:var(--fg); }
+        .year-total { font-size:.95em; color:var(--brass); font-weight:600; }
 
-        .months-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px; margin-bottom:10px; }
-        .month-check { display:flex; align-items:center; gap:8px; padding:10px; background:white; border-radius:8px; cursor:pointer; transition:all .2s; }
-        .month-check:hover { background:#f0f0f0; }
-        .month-check input[type="checkbox"] { width:20px; height:20px; cursor:pointer; }
+        .months-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:6px; margin-bottom:6px; }
+        .month-check { display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--panel2); border:1px solid transparent; border-radius:8px; cursor:pointer; font-size:.92em; }
+        .month-check:hover { border-color:var(--line); }
+        .month-check:has(input:checked) { background:var(--brass-soft); border-color:rgba(217,164,65,.35); }
+        .month-check input[type="checkbox"] { width:18px; height:18px; cursor:pointer; accent-color:var(--brass); }
 
-        .purchase-btn { 
-            background:#ff9800; 
-            color:white; 
-            border:none; 
-            padding:4px 8px; 
-            border-radius:4px; 
-            cursor:pointer; 
-            font-size:0.85em;
-            margin-left:auto;
-        }
-        .purchase-btn:hover { background:#f57c00; }
-        .purchase-btn.saved { background:#4caf50; }
+        .purchase-btn { background:var(--panel3); color:var(--fg); border:1px solid var(--line); padding:3px 8px; border-radius:6px; cursor:pointer; font-size:.85em; margin-left:auto; }
+        .purchase-btn:hover { border-color:var(--brass); }
+        .purchase-btn.saved { background:rgba(63,191,138,.18); border-color:var(--pos); }
 
-        .extra-input { margin-top:10px; padding:12px; background:white; border-radius:10px; }
-        .extra-input label { display:block; margin-bottom:8px; font-weight:bold; color:#333; }
-        .extra-input input { width:100%; padding:10px; border:2px solid #ddd; border-radius:8px; font-size:1em; }
+        .extra-input { margin-top:10px; padding:12px; background:var(--panel2); border-radius:10px; }
+        .extra-input label { display:block; margin-bottom:8px; font-weight:600; color:var(--fg); }
+        input[type="number"], input[type="text"], input[type="date"], .extra-input input { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; background:var(--ink); color:var(--fg); }
+        input:focus { outline:none; border-color:var(--brass); }
 
-        .calculation { background:#e8f5e9; padding:20px; border-radius:10px; margin-top:10px; }
-        .calculation h2 { color:#2e7d32; margin-bottom:15px; }
-        .calculation h3 { color:#764ba2; margin-bottom:10px; margin-top:15px; }
-        .calc-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #c8e6c9; }
+        .calculation { background:var(--panel); border:1px solid var(--line); padding:20px; border-radius:12px; margin-top:10px; }
+        .calculation h2 { color:var(--fg); margin-bottom:14px; }
+        .calculation h3 { color:var(--brass); margin-bottom:10px; margin-top:15px; }
+        .calc-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line); }
         .calc-row:last-child { border-bottom:none; }
-        .calc-row.total-family { background:#d1c4e9; padding:15px; border-radius:8px; margin-top:15px; font-weight:bold; }
-        .calc-row.subtotal { font-weight:bold; border-bottom:2px solid #764ba2; }
+        .calc-row.total-family { background:var(--brass-soft); padding:14px; border-radius:8px; margin-top:15px; font-weight:600; color:var(--brass); }
+        .calc-row.subtotal { font-weight:600; border-bottom:1px solid var(--brass); }
 
-        .live-table { width:100%; border-collapse:collapse; margin:20px 0; }
-        .live-table th, .live-table td { padding:12px; text-align:left; border-bottom:1px solid #ddd; }
-        .live-table th { background:#764ba2; color:white; }
-        .live-table tr:hover { background:#f5f5f5; }
-        .positive { color:#2e7d32; font-weight:bold; }
-        .negative { color:#c62828; font-weight:bold; }
+        .live-table { width:100%; border-collapse:collapse; margin:16px 0; font-size:.95em; }
+        .live-table th, .live-table td { padding:11px 12px; text-align:left; border-bottom:1px solid var(--line); }
+        .live-table th { background:var(--panel2); color:var(--muted); font-weight:500; font-size:.88em; }
+        .live-table tr:hover td { background:rgba(255,255,255,.02); }
+        .live-table small { color:var(--muted); }
+        .positive, .live-table small.positive { color:var(--pos); font-weight:600; }
+        .negative, .live-table small.negative { color:var(--neg); font-weight:600; }
+        [contenteditable="true"] { border-radius:6px; outline:none; }
+        [contenteditable="true"]:focus { box-shadow:0 0 0 2px var(--brass); }
 
-        .controls { display:flex; gap:10px; justify-content:flex-end; margin-bottom:10px; align-items:center; }
-        .btn { padding:10px 14px; border-radius:8px; border:none; cursor:pointer; font-weight:bold; }
-        .btn.save { background:#2e7d32; color:#fff; }
-        .btn.clear { background:#e53935; color:#fff; }
+        .controls { display:flex; gap:8px; justify-content:flex-end; margin-bottom:10px; align-items:center; flex-wrap:wrap; }
+        .btn { padding:9px 14px; border-radius:8px; border:1px solid var(--line); cursor:pointer; font:inherit; font-weight:600; font-size:.92em; color:var(--fg); background:var(--panel2); }
+        .btn:hover { border-color:var(--brass); }
+        .btn.save { background:var(--brass); border-color:var(--brass); color:var(--ink); }
+        .btn.clear { background:transparent; border-color:rgba(236,106,97,.5); color:var(--neg); }
 
-        .info-box { background:#fff3cd; border-left:4px solid #ffc107; padding:15px; margin:15px 0; border-radius:8px; }
-        .info-box strong { color:#856404; }
+        .info-box { background:var(--warn-bg); border-left:3px solid var(--brass); padding:14px 16px; margin:14px 0; border-radius:8px; color:var(--fg); }
+        .info-box strong { color:var(--brass); }
+        #simpleToast { background:var(--panel3) !important; color:var(--fg) !important; border:1px solid var(--line); }
 
-        @media print { body { background:white; } .container { box-shadow:none; } }
+        @media (max-width:700px) { body { padding:16px 12px; } .live-table { display:block; overflow-x:auto; } }
+        @media print { body { background:white; color:black; } }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>💰 Tracker Inwestycji</h1>
-        <p class="subtitle">Plan Rodzinny: XTB | Wiek 35→67 (32 lata) | 💹 Ceny live z Yahoo Finance</p>
+        <h1>eMERYTURA</h1>
+        <p class="subtitle">Plan rodzinny na 32 lata, od 35. do 67. roku życia. Ceny na żywo z Yahoo Finance.</p>
 
-        <div class="info-box" style="background:#e3f2fd; border-left-color:#2196f3;">
-            <strong>🎯 Automatyczne pobieranie cen z Yahoo Finance!</strong><br>
-            Tracker używa DOKŁADNIE Twoich tickerów z XTB:<br>
-            • S&P 500 ŻONA: CSPX.L (USD - przeliczone z GBP)<br>
-            • S&P 500 TY: VUAA.L (USD - przeliczone z GBP)<br>
-            • Złoto (TY + ŻONA): IGLN.L (USD - przeliczone z GBP)<br>
-            • Uran: NUKL.DE (EUR - bezpośrednio z Xetra)<br>
-            Kursy walut: Frankfurter API (EUR/PLN, USD/PLN, GBP/USD)
+        <div class="info-box" style="background:var(--info-bg); border-left-color:var(--brass);">
+            <strong>Ceny same się aktualizują.</strong> Live ROI pobiera notowania co minutę: S&amp;P 500 (CSPX.L, VUAA.L), złoto (IGLN.L), uran (NUKL.DE), Cameco (CCJ), Bitcoin (BTC-USD) i kursy USD/PLN, EUR/PLN.
         </div>
 
         <div class="summary">
@@ -112,8 +128,8 @@
 
         <div class="controls">
             <button id="saveBtn" class="btn save">💾 Zapisz zmiany</button>
-            <button id="exportBtn" class="btn" style="background:#ff9800;">📤 Eksport danych zakupów</button>
-            <button id="importBtn" class="btn" style="background:#2196f3; color:white;">📥 Import danych zakupów</button>
+            <button id="exportBtn" class="btn" style="background:var(--panel2);">📤 Eksport danych zakupów</button>
+            <button id="importBtn" class="btn" style="background:var(--panel2); color:white;">📥 Import danych zakupów</button>
             <input type="file" id="importFile" accept=".json" style="display:none;">
             <button id="clearBtn" class="btn clear" title="Usuń zapisane dane lokalne">🧹 Wyczyść zapisane</button>
         </div>
@@ -127,37 +143,38 @@
             <button class="tab" data-tab="ppk">🏦 PPK</button>
             <button class="tab" data-tab="zonasp">💍 ŻONA S&P500</button>
             <button class="tab" data-tab="zonagold">💍 ŻONA Złoto</button>
+            <button class="tab" data-tab="btc">₿ Bitcoin</button>
             <button class="tab" data-tab="liveroi">📊 Live ROI</button>
             <button class="tab" data-tab="summary">📋 Podsumowanie</button>
         </div>
 
         <div id="obligacje" class="tab-content active">
             <h2>Obligacje (EDO + TOS)</h2>
-            <p style="margin-bottom: 12px; color: #666;">200 zł/mies bazowo + schodkowe extra</p>
+            <p style="margin-bottom: 12px; color:var(--muted);">200 zł/mies bazowo + schodkowe extra</p>
             <div id="obligacjeContent"></div>
         </div>
 
         <div id="uran" class="tab-content">
             <h2>ETF Uran (XTB - Twoje konto)</h2>
-            <p style="margin-bottom: 12px; color: #666;">121,28 zł/mies (po realokacji z Bitcoina) + extra schodkowe (1/4, 1/6, 1/12)</p>
+            <p style="margin-bottom: 12px; color:var(--muted);">121,28 zł/mies (po realokacji z Bitcoina) + extra schodkowe (1/4, 1/6, 1/12)</p>
             <div id="uranContent"></div>
         </div>
 
         <div id="cameco" class="tab-content">
             <h2>🏭 Cameco Corp - Akcje (XTB)</h2>
-            <p style="margin-bottom: 12px; color: #666;">84,89 zł/mies (po realokacji z Bitcoina) | Dywidenda: ~0.18% rocznie | Ticker: CCJ (NYSE)</p>
+            <p style="margin-bottom: 12px; color:var(--muted);">84,89 zł/mies (po realokacji z Bitcoina) | Dywidenda: ~0.18% rocznie | Ticker: CCJ (NYSE)</p>
             <div id="camecoContent"></div>
         </div>
 
         <div id="sp500" class="tab-content">
             <h2>ETF S&P 500 (XTB - Twoje konto)</h2>
-            <p style="margin-bottom: 12px; color: #666;">121,28 zł/mies (po realokacji z Bitcoina) + extra schodkowe (1/4, 1/6, 1/12)</p>
+            <p style="margin-bottom: 12px; color:var(--muted);">121,28 zł/mies (po realokacji z Bitcoina) + extra schodkowe (1/4, 1/6, 1/12)</p>
             <div id="sp500Content"></div>
         </div>
 
         <div id="goldty" class="tab-content">
             <h2>🥇 Złoto (XTB - Twoje konto)</h2>
-            <p style="margin-bottom: 12px; color: #666;">iShares Physical Gold ETC (TER: 0.12%) | 84,89 zł/mies (po realokacji z Bitcoina)</p>
+            <p style="margin-bottom: 12px; color:var(--muted);">iShares Physical Gold ETC (TER: 0.12%) | 84,89 zł/mies (po realokacji z Bitcoina)</p>
             <div class="info-box">
                 <strong>Ticker:</strong> IGLN (IE00B4NCH459)<br>
                 <strong>Plan:</strong> 84,89 zł × 384 mies = 32,598 zł wpłat
@@ -167,8 +184,8 @@
 
         <div id="ppk" class="tab-content">
             <h2>🏦 PPK - Pracownicze Plany Kapitałowe</h2>
-            <p style="margin-bottom: 12px; color: #666;">Fundusz: PZU FZD 2050 | ~280 zł/mies (Ty + Pracodawca + Państwo)</p>
-            <div class="info-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <p style="margin-bottom: 12px; color:var(--muted);">Fundusz: PZU FZD 2050 | ~280 zł/mies (Ty + Pracodawca + Państwo)</p>
+            <div class="info-box" style="background: var(--panel2); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
                 <h3 style="margin: 0 0 15px 0; color: white;">💰 Stan PPK (październik 2025)</h3>
                 <div style="font-size: 2em; font-weight: bold; margin-bottom: 10px;">22,861 zł</div>
                 <div style="opacity: 0.9;">
@@ -194,7 +211,7 @@
 
         <div id="zonasp" class="tab-content">
             <h2>💍 "ŻONA" S&P 500 (XTB)</h2>
-            <p style="margin-bottom: 12px; color: #666;">121,28 zł/mies (po realokacji z Bitcoina)</p>
+            <p style="margin-bottom: 12px; color:var(--muted);">121,28 zł/mies (po realokacji z Bitcoina)</p>
             <div class="info-box">
                 <strong>XTB konto "ŻONY" - S&P 500:</strong><br>
                 • ETF S&P 500: 121,28 zł/mies<br>
@@ -206,7 +223,7 @@
 
         <div id="zonagold" class="tab-content">
             <h2>💍 "ŻONA" Złoto (XTB)</h2>
-            <p style="margin-bottom: 12px; color: #666;">36,38 zł/mies (po realokacji z Bitcoina)</p>
+            <p style="margin-bottom: 12px; color:var(--muted);">36,38 zł/mies (po realokacji z Bitcoina)</p>
             <div class="info-box">
                 <strong>XTB konto "ŻONY" - Złoto:</strong><br>
                 • iShares Physical Gold ETC (IGLN): 36,38 zł/mies<br>
@@ -216,19 +233,34 @@
             <div id="zonagoldContent"></div>
         </div>
 
+        <div id="btc" class="tab-content">
+            <h2>₿ Bitcoin</h2>
+            <p style="margin-bottom:12px; color:var(--muted);">Zakupy dodajesz ręcznie. Cena BTC/USD na żywo, 24/7.</p>
+            <div class="calculation">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; align-items:end;">
+                    <label>Data zakupu<input type="date" id="btcDate"></label>
+                    <label>Kwota (zł)<input type="number" id="btcAmount" step="0.01" min="0" placeholder="np. 500"></label>
+                    <label>Ilość BTC (opcjonalnie)<input type="number" id="btcUnits" step="0.00000001" min="0" placeholder="puste = po cenie z teraz"></label>
+                    <button class="btn save" onclick="addBtcPurchase()">Dodaj zakup</button>
+                </div>
+                <p style="margin-top:10px; font-size:.88em; color:var(--muted);">Jeśli znasz dokładną ilość BTC z potwierdzenia zakupu, wpisz ją. Bez niej program liczy ilość po bieżącej cenie.</p>
+            </div>
+            <div id="btcContent" style="margin-top:16px;"></div>
+        </div>
+
         <div id="liveroi" class="tab-content">
             <div class="calculation">
                 <h2>📊 Rzeczywisty ROI - Portfolio Live</h2>
-                <p style="margin-bottom:20px; color:#666;">Tracker rzeczywistych zakupów z cenami rynkowymi</p>
+                <p style="margin-bottom:20px; color:var(--muted);">Tracker rzeczywistych zakupów z cenami rynkowymi</p>
                 
                 <div style="margin-bottom:20px; display:flex; gap:10px;">
                     <button id="refreshPrices" class="btn save" style="flex:1;">🔄 Odśwież ceny rynkowe</button>
-                    <button id="editPurchases" class="btn" style="flex:1; background:#ff9800;">📝 Edytuj zakupy</button>
-                    <button id="exportReport" class="btn" style="flex:1; background:#9c27b0; color:white;">📄 Raport tekstowy</button>
+                    <button id="editPurchases" class="btn" style="flex:1; background:var(--panel2);">📝 Edytuj zakupy</button>
+                    <button id="exportReport" class="btn" style="flex:1; background:var(--panel2); color:white;">📄 Raport tekstowy</button>
                 </div>
 
                 <div id="liveRoiContent">
-                    <p style="text-align:center; color:#999; padding:40px;">Zaznacz checkboxy w zakładkach i kliknij "💰 Zapisz cenę" aby śledzić rzeczywiste ROI</p>
+                    <p style="text-align:center; color:var(--muted); padding:40px;">Zaznacz checkboxy w zakładkach i kliknij "💰 Zapisz cenę" aby śledzić rzeczywiste ROI</p>
                 </div>
             </div>
         </div>
@@ -360,7 +392,7 @@
                     • ETF S&P 500: 29.4% (121,28 zł)<br>
                     • Invesco Physical Gold: 20.6% (84,89 zł)<br>
                     <br>
-                    <em style="color:#ff9800;">💡 Sektor uranowy łącznie: 206,17 zł/mies (50% alokacji w Cameco)</em>
+                    <em style="color:var(--amber);">💡 Sektor uranowy łącznie: 206,17 zł/mies (50% alokacji w Cameco)</em>
                 </div>
 
                 <div class="info-box">
@@ -384,7 +416,8 @@
             'uran': 'IE000M7V94E1',      // Uran TY (NUKL)
             'cameco': 'CCJ',             // Cameco Corp (akcje)
             'goldty': 'IE00B4NCH459',    // Złoto TY (IGLN)
-            'ppk': 'PPK'                 // PPK (manual tracking)
+            'ppk': 'PPK',                // PPK (manual tracking)
+            'btc': 'BTC'                 // Bitcoin (zakupy dodawane ręcznie)
         };
 
         // ===== PRELOADED PURCHASES Z XTB PDF (18/11/2025) =====
@@ -748,14 +781,14 @@
                                 <input type="number" id="${type}_extra_input_y${year}" value="" placeholder="Wpisz kwotę..." style="flex:1;">
                                 ${hasTicker ? `<button class="purchase-btn" onclick="saveExtraPurchasePrice('${type}', ${year})" style="padding:10px 15px; font-size:1em;">💰 Dodaj</button>` : ''}
                             </div>
-                            <div id="${type}_extra_list_y${year}" style="font-size:0.9em; color:#666;">
+                            <div id="${type}_extra_list_y${year}" style="font-size:0.9em; color:var(--muted);">
                                 ${Object.keys(purchases).filter(k => k.startsWith(`${type}_extra_y${year}_`)).map(key => {
                                     const p = purchases[key];
-                                    return `<div style="padding:5px; background:#f0f0f0; border-radius:5px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+                                    return `<div style="padding:5px; background:var(--panel2); border-radius:5px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
                                         <span>✅ ${p.amount} zł (${p.priceOriginal?.toFixed(2)} ${p.currency} × ${p.units?.toFixed(4)})</span>
-                                        <button onclick="deleteExtraPurchase('${key}')" style="background:#e53935; color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer; font-size:0.85em;">🗑️</button>
+                                        <button onclick="deleteExtraPurchase('${key}')" style="background:rgba(236,106,97,.18); color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer; font-size:0.85em;">🗑️</button>
                                     </div>`;
-                                }).join('') || '<span style="color:#999;">Brak wpłat extra</span>'}
+                                }).join('') || '<span style="color:var(--muted);">Brak wpłat extra</span>'}
                             </div>
                         </div>
                     ` : ''}
@@ -877,6 +910,7 @@
         // ===== Ceny na żywo (wersja EXE): Yahoo Finance przez proces główny =====
         const LIVE_SYMBOLS = {
             'CCJ': { symbol: 'CCJ', baseCurrency: 'USD' },
+            'BTC': { symbol: 'BTC-USD', baseCurrency: 'USD' },
             'IE000M7V94E1': { symbol: 'NUKL.DE', baseCurrency: 'EUR' },
             'IE00B5BMR087': { symbol: 'CSPX.L', baseCurrency: 'USD' },
             'IE00BFMXXD54': { symbol: 'VUAA.L', baseCurrency: 'USD' },
@@ -1139,8 +1173,8 @@
             if (Object.keys(grouped).length === 0) {
                 content.innerHTML = `
                     <div style="text-align:center; padding:40px;">
-                        <p style="color:#999; margin-bottom:20px;">Brak zapisanych zakupów.</p>
-                        <p style="color:#666; font-size:0.9em;">
+                        <p style="color:var(--muted); margin-bottom:20px;">Brak zapisanych zakupów.</p>
+                        <p style="color:var(--muted); font-size:0.9em;">
                             <strong>Jak zacząć:</strong><br>
                             1. Przejdź do dowolnej zakładki (np. ETF Uran)<br>
                             2. Zaznacz checkbox przy miesiącu<br>
@@ -1152,7 +1186,7 @@
                 return;
             }
 
-            let html = '<div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:20px;">';
+            let html = '<div style="background:var(--warn-bg); padding:15px; border-radius:8px; margin-bottom:20px;">';
             html += '<strong>💡 Edycja danych Live ROI</strong><br>';
             html += 'Kliknij na cenę obecną lub jednostki aby edytować. Kursy walut edytujesz poniżej tabeli.';
             html += '</div>';
@@ -1255,10 +1289,10 @@
                     html += `
                         <tr>
                             <td><strong>${type.toUpperCase()}</strong><br><small>${g.ticker}</small></td>
-                            <td contenteditable="true" id="liveunits_${type}" style="background:#e3f2fd; padding:8px; border:2px solid #2196f3; cursor:text;" 
-                                onblur="updateLiveUnits('${type}', this.textContent)">${actualUnits.toFixed(4)}</td>
+                            <td contenteditable="true" id="liveunits_${type}" style="background:var(--info-bg); padding:8px; border:2px solid var(--brass); cursor:text;" 
+                                onblur="updateLiveUnits('${type}', this.textContent)">${actualUnits.toFixed(type === 'btc' ? 8 : 4)}</td>
                             <td>${avgDisplay}</td>
-                            <td contenteditable="true" id="liveprice_${type}" style="background:#fffacd; padding:8px; border:2px solid #ffc107; cursor:text;" 
+                            <td contenteditable="true" id="liveprice_${type}" style="background:var(--edit-bg); padding:8px; border:2px solid var(--brass); cursor:text;" 
                                 onblur="updateLivePrice('${type}', this.textContent, '${priceData.currency}')" 
                                 data-currency="${priceData.currency}" 
                                 data-rate="${priceData.exchangeRate}">${priceData.priceOriginal.toFixed(2)} ${priceData.currency}${priceData.changePct != null ? ` <small class="${priceData.changePct >= 0 ? 'positive' : 'negative'}">${priceData.changePct >= 0 ? '▲ +' : '▼ '}${priceData.changePct.toFixed(2)}%</small>` : ''}${priceData.fake ? ' <small class="negative">⚠ cena zastępcza</small>' : ''}<br><small>(${priceData.pricePLN.toFixed(2)} zł)</small></td>
@@ -1276,7 +1310,7 @@
             const totalProfitClass = totalProfit >= 0 ? 'positive' : 'negative';
             
             html += `
-                <tr style="background:#f0f0f0; font-weight:bold;">
+                <tr style="background:var(--panel2); font-weight:bold;">
                     <td>RAZEM</td>
                     <td>-</td>
                     <td>-</td>
@@ -1289,25 +1323,25 @@
             `;
             
             html += '</tbody></table>';
-            html += `<p style="margin-top:8px; font-size:0.85em; color:#666;">${lastQuoteTime ? `🟢 Ceny na żywo · ostatnie notowanie ${new Date(lastQuoteTime).toLocaleString('pl-PL', {dateStyle:'short', timeStyle:'short'})} · odświeżanie co 60 s (Yahoo Finance, giełdy europejskie do ~15 min opóźnienia)` : 'Ceny z końca dnia (marketstack)'}${anyManual ? ' · <strong>część cen wpisana ręcznie</strong> – <a href="#" onclick="clearManualPrices();return false;">wróć do cen automatycznych</a>' : ''}${anyFake ? ' · <strong class="negative">⚠ nie udało się pobrać części cen, pokazane są ceny zastępcze, nie rynkowe</strong>' : ''}</p>`;
+            html += `<p style="margin-top:8px; font-size:0.85em; color:var(--muted);">${lastQuoteTime ? `🟢 Ceny na żywo · ostatnie notowanie ${new Date(lastQuoteTime).toLocaleString('pl-PL', {dateStyle:'short', timeStyle:'short'})} · odświeżanie co 60 s (Yahoo Finance, giełdy europejskie do ~15 min opóźnienia)` : 'Ceny z końca dnia (marketstack)'}${anyManual ? ' · <strong>część cen wpisana ręcznie</strong> – <a href="#" onclick="clearManualPrices();return false;">wróć do cen automatycznych</a>' : ''}${anyFake ? ' · <strong class="negative">⚠ nie udało się pobrać części cen, pokazane są ceny zastępcze, nie rynkowe</strong>' : ''}</p>`;
             
             // Dodaj sekcję edycji kursów walutowych
             if (Object.keys(exchangeRates).length > 0) {
-                html += '<div style="background:#e8f5e9; padding:20px; border-radius:10px; margin-top:20px;">';
-                html += '<h3 style="color:#2e7d32; margin-bottom:15px;">💱 Kursy walut (kliknij aby edytować)</h3>';
+                html += '<div style="background:var(--ok-bg); padding:20px; border-radius:10px; margin-top:20px;">';
+                html += '<h3 style="color:var(--pos); margin-bottom:15px;">💱 Kursy walut (kliknij aby edytować)</h3>';
                 
                 for (const currency in exchangeRates) {
                     const rate = exchangeRates[currency];
                     html += `
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:white; border-radius:8px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--panel); border-radius:8px; margin-bottom:10px;">
                             <strong>${currency}/PLN:</strong>
-                            <span contenteditable="true" id="rate_${currency}" style="background:#fffacd; padding:8px 15px; border:2px solid #ffc107; border-radius:6px; min-width:100px; text-align:center; cursor:text;" 
+                            <span contenteditable="true" id="rate_${currency}" style="background:var(--edit-bg); padding:8px 15px; border:2px solid var(--brass); border-radius:6px; min-width:100px; text-align:center; cursor:text;" 
                                 onblur="updateExchangeRate('${currency}', this.textContent)">${rate.toFixed(4)}</span>
                         </div>
                     `;
                 }
                 
-                html += '<p style="color:#666; font-size:0.9em; margin-top:10px;">Po zmianie kursu kliknij ponownie "🔄 Odśwież ceny rynkowe" aby przeliczyć wartości.</p>';
+                html += '<p style="color:var(--muted); font-size:0.9em; margin-top:10px;">Po zmianie kursu kliknij ponownie "🔄 Odśwież ceny rynkowe" aby przeliczyć wartości.</p>';
                 html += '</div>';
             }
             
@@ -1344,6 +1378,7 @@
             const tab = e.currentTarget.dataset.tab;
             activateTab(tab);
             if (tab === 'liveroi' && window.quotes) updateLiveROI(null, true);
+            if (tab === 'btc') renderBtc();
             saveState();
         }
 
@@ -1593,7 +1628,7 @@
                 return;
             }
             
-            let html = '<div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:20px;">';
+            let html = '<div style="background:var(--warn-bg); padding:15px; border-radius:8px; margin-bottom:20px;">';
             html += '<strong>⚠️ Edycja zakupów</strong><br>';
             html += 'Możesz edytować: cenę zakupu, kurs waluty, oraz ilość jednostek. Kliknij na żółte/niebieskie pole aby zmienić wartość.';
             html += '</div>';
@@ -1611,14 +1646,14 @@
                         <td><strong>${p.type.toUpperCase()}</strong></td>
                         <td>${dateStr}</td>
                         <td>${p.amount.toFixed(2)} zł</td>
-                        <td contenteditable="true" id="price_${key}" style="background:#fffacd; padding:8px; border:2px solid #ffc107;" 
+                        <td contenteditable="true" id="price_${key}" style="background:var(--edit-bg); padding:8px; border:2px solid var(--brass);" 
                             onblur="updatePurchasePrice('${key}', this.textContent)">${p.priceOriginal ? p.priceOriginal.toFixed(2) : p.price.toFixed(2)}</td>
                         <td>${currency}</td>
-                        <td contenteditable="true" id="rate_${key}" style="background:#e1f5fe; padding:8px; border:2px solid #03a9f4;" 
+                        <td contenteditable="true" id="rate_${key}" style="background:var(--info-bg); padding:8px; border:2px solid var(--brass);" 
                             onblur="updatePurchaseRate('${key}', this.textContent)">${exchangeRate.toFixed(4)}</td>
-                        <td contenteditable="true" id="units_${key}" style="background:#e3f2fd; padding:8px; border:2px solid #2196f3;" 
+                        <td contenteditable="true" id="units_${key}" style="background:var(--info-bg); padding:8px; border:2px solid var(--brass);" 
                             onblur="updatePurchaseUnits('${key}', this.textContent)">${p.units.toFixed(6)}</td>
-                        <td><button onclick="deletePurchase('${key}')" style="background:#e53935; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">🗑️</button></td>
+                        <td><button onclick="deletePurchase('${key}')" style="background:rgba(236,106,97,.18); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">🗑️</button></td>
                     </tr>
                 `;
             }
@@ -1728,6 +1763,41 @@
             showToast(`Kurs ${currency}/PLN zaktualizowany: ${newRate.toFixed(4)}`);
         }
         
+        // ===== Bitcoin =====
+        function renderBtc() {
+            const box = document.getElementById('btcContent'); if (!box) return;
+            const keys = Object.keys(purchases).filter(k => purchases[k].type === 'btc')
+                .sort((a, b) => (purchases[b].date || '').localeCompare(purchases[a].date || ''));
+            if (!keys.length) { box.innerHTML = '<p style="color:var(--muted);">Nie masz jeszcze zakupów BTC. Dodaj pierwszy powyżej, a pojawi się też w Live ROI.</p>'; return; }
+            let units = 0, spent = 0;
+            const rows = keys.map(k => { const p = purchases[k]; units += p.units; spent += p.amount;
+                return `<tr><td>${(p.date || '').slice(0, 10)}</td><td>${p.amount.toFixed(2)} zł</td><td>${p.units.toFixed(8)}</td><td>${p.priceOriginal ? p.priceOriginal.toFixed(0) + ' USD' : '-'}</td>
+                    <td><button class="btn clear" style="padding:4px 10px;" onclick="deleteBtcPurchase('${k}')">Usuń</button></td></tr>`; }).join('');
+            box.innerHTML = `<table class="live-table"><thead><tr><th>Data</th><th>Kwota</th><th>BTC</th><th>Cena zakupu</th><th></th></tr></thead><tbody>${rows}
+                <tr><td><strong>Razem</strong></td><td><strong>${spent.toFixed(2)} zł</strong></td><td><strong>${units.toFixed(8)}</strong></td><td></td><td></td></tr></tbody></table>`;
+        }
+        async function addBtcPurchase() {
+            const amount = parseFloat(document.getElementById('btcAmount').value);
+            const unitsIn = parseFloat(document.getElementById('btcUnits').value);
+            const dateIn = document.getElementById('btcDate').value;
+            if (!(amount > 0)) { alert('Wpisz kwotę zakupu w zł.'); return; }
+            showToast('Pobieram cenę BTC...');
+            const pd = await fetchPrice('BTC');
+            if (pd.fake && !(unitsIn > 0)) { alert('Nie udało się pobrać ceny BTC. Wpisz ilość BTC ręcznie.'); return; }
+            const units = unitsIn > 0 ? unitsIn : amount / pd.pricePLN;
+            const pricePLN = amount / units;
+            const key = 'btc_' + Date.now();
+            purchases[key] = { date: dateIn ? dateIn + 'T12:00:00Z' : new Date().toISOString(), ticker: 'BTC', type: 'btc',
+                amount, price: pricePLN, priceOriginal: pricePLN / pd.exchangeRate, currency: 'USD', exchangeRate: pd.exchangeRate, units };
+            savePurchases(); updateTotal(); renderBtc();
+            ['btcAmount', 'btcUnits'].forEach(id => document.getElementById(id).value = '');
+            showToast(`Dodano zakup: ${units.toFixed(8)} BTC za ${amount.toFixed(2)} zł`);
+        }
+        function deleteBtcPurchase(key) {
+            if (!confirm('Usunąć ten zakup BTC?')) return;
+            delete purchases[key]; savePurchases(); updateTotal(); renderBtc(); showToast('Zakup BTC usunięty');
+        }
+
         function clearManualPrices() {
             manualPrices = {}; manualRates = {};
             localStorage.setItem('manualPrices', '{}'); localStorage.setItem('manualRates', '{}');
@@ -1764,6 +1834,8 @@
         }
         
         initializeContent();
+        renderBtc();
+        document.getElementById('btcDate').value = new Date().toISOString().slice(0, 10);
         document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', onTabClick));
         document.getElementById('saveBtn').addEventListener('click', ()=> saveState(true));
         document.getElementById('exportBtn').addEventListener('click', exportPurchasesJSON);
