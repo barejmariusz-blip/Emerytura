@@ -1198,7 +1198,7 @@
             
             html += '<table class="live-table"><thead><tr><th>Asset</th><th>Jednostki</th><th>Śr. cena zakupu</th><th>Cena obecna</th><th>ROI (waluta)</th><th>Wartość</th><th>Zysk/Strata</th><th>ROI (PLN)</th></tr></thead><tbody>';
             
-            let totalValue = 0;
+            let totalValue = 0, totalCost = 0;
             
             if (!silent) showToast('Pobieram aktualne ceny...');
             
@@ -1216,7 +1216,10 @@
                 if (manualPrices[type]) {
                     anyManual = true;
                     // Użyj ręcznej ceny
-                    const manualRate = manualRates[manualPrices[type].currency] || 1;
+                    const mc = manualPrices[type].currency;
+                    let manualRate = manualRates[mc];
+                    if (!manualRate) { try { manualRate = window.quotes ? await liveFx(mc, 'PLN') : null; } catch (e) {} }
+                    if (!manualRate) manualRate = (await fetchPrice(g.ticker)).exchangeRate;   // kurs z tego samego źródła co cena
                     priceData = {
                         priceOriginal: manualPrices[type].price,
                         currency: manualPrices[type].currency,
@@ -1279,8 +1282,11 @@
                     const currentValue = actualUnits * priceData.pricePLN;
                     
                     // Zysk/strata w PLN (wartość obecna vs suma wpłat)
-                    const profit = currentValue - g.totalSpent;
-                    const roiPLN = (profit / g.totalSpent) * 100;
+                    // koszt: wpłaty w zł, a przy ręcznej średniej – średnia × jednostki × bieżący kurs (jak w XTB)
+                    const cost = avgManual != null ? avgManual * actualUnits * priceData.exchangeRate : g.totalSpent;
+                    totalCost += cost;
+                    const profit = currentValue - cost;
+                    const roiPLN = (profit / cost) * 100;
                     
                     totalValue += currentValue;
                     
@@ -1317,6 +1323,7 @@
                 }
             }
             
+            totalInvested = totalCost;
             const totalProfit = totalValue - totalInvested;
             const totalROI = (totalProfit / totalInvested) * 100;
             const totalProfitClass = totalProfit >= 0 ? 'positive' : 'negative';
@@ -1767,6 +1774,7 @@
             manualPrices[type] = { price: newPrice, currency: currency };
             localStorage.setItem('manualPrices', JSON.stringify(manualPrices));
             showToast(`Cena ${type} zaktualizowana: ${nf(newPrice, 2)} ${currency}`);
+            updateLiveROI();
         }
         
         function updateLiveUnits(type, newUnitsStr) {
@@ -1780,6 +1788,7 @@
             manualUnits[type] = newUnits;
             localStorage.setItem('manualUnits', JSON.stringify(manualUnits));
             showToast(`Jednostki ${type} zaktualizowane: ${nf(newUnits, 4)}`);
+            updateLiveROI();
         }
         
         function updateExchangeRate(currency, newRateStr) {
@@ -1792,6 +1801,7 @@
             manualRates[currency] = newRate;
             localStorage.setItem('manualRates', JSON.stringify(manualRates));
             showToast(`Kurs ${currency}/PLN zaktualizowany: ${nf(newRate, 4)}`);
+            updateLiveROI();
         }
         
         // ===== Bitcoin =====
